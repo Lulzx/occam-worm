@@ -258,19 +258,23 @@ def sim_input_from_json(data: Mapping[str, Any]) -> SimInput:
     return SimInput(dt, n_steps, spec, ticks, events, params, initial, observed)
 
 
-def validate_run(sim_input: SimInput, dt_max: float | None) -> None:
+def validate_run_settings(dt: float, n_steps: int, sample_ticks: Sequence[int], dt_max: float | None) -> None:
     """The checks of ``Simulator::validate`` (dt, step count and sample ticks)."""
-    if not math.isfinite(sim_input.dt) or not sim_input.dt > 0.0:
+    if not math.isfinite(dt) or not dt > 0.0:
         raise InputError("dt must be a positive finite number")
-    if dt_max is not None and sim_input.dt > dt_max:
+    if dt_max is not None and dt > dt_max:
         raise InputError("dt exceeds the program's declared dt_max")
-    if not 0 <= sim_input.n_steps <= MAX_STEPS:
+    if not 0 <= n_steps <= MAX_STEPS:
         raise InputError(f"n_steps must be in [0, {MAX_STEPS}]")
     previous = -1
-    for tick in sim_input.sample_ticks:
-        if tick <= previous or tick > sim_input.n_steps:
+    for tick in sample_ticks:
+        if tick <= previous or tick > n_steps:
             raise InputError("sample_ticks must be strictly increasing and within [0, n_steps]")
         previous = tick
+
+
+def validate_run(sim_input: SimInput, dt_max: float | None) -> None:
+    validate_run_settings(sim_input.dt, sim_input.n_steps, sim_input.sample_ticks, dt_max)
 
 
 def validate_stimulus(events: Sequence[StimulusEvent], graph: Graph) -> None:
