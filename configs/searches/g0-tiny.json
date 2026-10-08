@@ -1,0 +1,13 @@
+{
+  "name": "g0-tiny",
+  "tier": "G0",
+  "max_nodes": 5,
+  "max_depth": 4,
+  "max_registers": 1,
+  "max_parameters": 0,
+  "ops": ["lut", "add", "mul", "count_in", "stimulus", "const"],
+  "constants": [2],
+  "count_values": [1],
+  "lut": { "sizes": [3], "values": [0, 1] },
+  "register_init": [0]
+}
