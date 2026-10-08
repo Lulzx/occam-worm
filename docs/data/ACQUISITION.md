@@ -72,6 +72,6 @@ GitHub does not guarantee byte-stable tarballs. If a re-download of the same com
 
 | Selection | Size |
 | --- | --- |
-| Default / `--milestone M0` | 2.6 GB of OSF data, plus five GitHub tarballs of unknown size (the ConnectomeToolbox repository is about 0.7 GB) |
+| Default / `--milestone M0` | 2.6 GB of OSF data plus 63 MB of GitHub tarballs (685 assets) |
 | `--milestone M6` | 85 MB (unc-31) + 569 MB (Atanas & Kim) |
 | `--all` | 4.2 GB with known sizes, plus GitHub tarballs |
