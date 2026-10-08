@@ -49,9 +49,14 @@ class InnerResult:
 
 
 class Candidate(Protocol):
-    key: str
-    kind: str
-    l_struct_bits: float
+    @property
+    def key(self) -> str: ...
+
+    @property
+    def kind(self) -> str: ...
+
+    @property
+    def l_struct_bits(self) -> float: ...
 
     def inner_select(self, view: TrainingView) -> InnerResult: ...
 

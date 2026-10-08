@@ -1,0 +1,13 @@
+{
+  "name": "atlas-demo",
+  "description": "Small real-data nested search (OW-012): kernel baselines, hand-written rules and the head of the G1 enumeration on the frozen LOAO split.",
+  "task": "T2a",
+  "history": false,
+  "folds": [0, 1, 2],
+  "kernel_families": { "B0": 32, "B1": 64, "B3": 64 },
+  "rules": ["configs/rules/gap-leak.wrl", "configs/rules/leak-adapt.wrl"],
+  "enumerate": { "config": "configs/searches/g1-tiny.json", "limit": 400, "max_kept": 8 },
+  "starts": 2,
+  "seed": 0,
+  "budget_orders": 50
+}
