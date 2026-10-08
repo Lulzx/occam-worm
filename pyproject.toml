@@ -24,7 +24,7 @@ build-backend = "hatchling.build"
 packages = ["python/occamworm"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/unit", "tests/leakage"]
+testpaths = ["tests/unit", "tests/leakage", "tests/synthetic_truth"]
 pythonpath = ["python"]
 
 [tool.ruff]
