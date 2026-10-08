@@ -142,6 +142,30 @@ class B4Model:
         self.pair_resp = jnp.asarray([m[2] for m in mapped], dtype=jnp.int32)
         self.n_pairs = len(data.pairs)
         self.n_theta = 2 + (len(net.neurons) if learned else 1)
+        # Compiled once per model: every fit (inner folds x ridge values, outer refit) reuses it.
+        self._value_and_grad = jax.jit(jax.value_and_grad(self._objective))
+
+    def _objective(
+        self,
+        theta: jax.Array,
+        g: jax.Array,
+        xq: jax.Array,
+        xy: jax.Array,
+        qq: jax.Array,
+        qq_inv: jax.Array,
+        qy: jax.Array,
+        yy: float,
+        lam: float,
+        theta_l2: float,
+    ) -> jax.Array:
+        c = self.coefficients(theta)
+        beta = qq_inv @ (qy - jnp.einsum("pmh,pm->h", xq, c))
+        quad = jnp.einsum("pm,pmk,pk->", c, g, c)
+        cross = 2.0 * jnp.einsum("pm,pmh,h->", c, xq, beta)
+        lin = -2.0 * jnp.einsum("pm,pm->", c, xy)
+        q = beta @ qq @ beta - 2.0 * beta @ qy
+        out: jax.Array = quad + cross + lin + lam * jnp.sum(c**2) + q + yy + theta_l2 * jnp.sum(theta[2:] ** 2)
+        return out
 
     def coefficients(self, theta: jax.Array) -> jax.Array:
         """(mapped pairs, M) tent coefficients."""
@@ -163,21 +187,11 @@ class B4Model:
         qq_inv = jnp.asarray(np.linalg.inv(ps.QQ + EPS * np.eye(ps.QQ.shape[0])))
         qy = jnp.asarray(ps.Qy)
         theta_l2 = 1e-3 * lam_rel
-
-        def objective(theta: jax.Array) -> jax.Array:
-            c = self.coefficients(theta)
-            beta = qq_inv @ (qy - jnp.einsum("pmh,pm->h", xq, c))
-            quad = jnp.einsum("pm,pmk,pk->", c, g, c)
-            cross = 2.0 * jnp.einsum("pm,pmh,h->", c, xq, beta)
-            lin = -2.0 * jnp.einsum("pm,pm->", c, xy)
-            q = beta @ jnp.asarray(ps.QQ) @ beta - 2.0 * beta @ qy
-            return quad + cross + lin + lam * jnp.sum(c**2) + q + ps.yy + theta_l2 * jnp.sum(theta[2:] ** 2)
-
-        vg = jax.jit(jax.value_and_grad(objective))
+        args = (g, xq, xy, jnp.asarray(ps.QQ), qq_inv, qy, ps.yy, lam, theta_l2)
         scale = max(abs(ps.yy), 1.0)
 
         def fun(x: FloatArray) -> tuple[float, FloatArray]:
-            v, gr = vg(jnp.asarray(x))
+            v, gr = self._value_and_grad(jnp.asarray(x), *args)
             return float(v) / scale, np.asarray(gr, dtype=np.float64) / scale
 
         x0 = np.asarray(init.extra["theta"]) if init is not None and "theta" in init.extra else self.initial()

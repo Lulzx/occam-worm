@@ -36,7 +36,7 @@ import pyarrow.parquet as pq
 from scipy import optimize
 
 from occamworm.baselines.data import KERNEL_KNOTS, M, PairStats, TaskData, aggregate, compute_stats, trial_designs
-from occamworm.baselines.evaluate import noise_for, rows_of, score_rows
+from occamworm.baselines.evaluate import INNER_NOISE_TRACES, noise_for, rows_of, score_rows
 from occamworm.baselines.kernels import EPS, Fit, loss
 from occamworm.baselines.linear_network import RECONSTRUCTION, label_map
 from occamworm.fit.accounting import l_params_bits
@@ -309,7 +309,7 @@ class WrlCandidate:
             ps = aggregate(stats, itrain, len(data.pairs))
             fit = fit_program(model, ps, self.starts, self.seed)
             thetas.append(fit.extra["theta"])
-            noise = noise_for(data, designs, fit, rows_of(data, itrain))
+            noise = noise_for(data, designs, fit, rows_of(data, itrain), INNER_NOISE_TRACES)
             vrows = rows_of(data, ival)
             nll, _, _ = score_rows(data, designs, fit, noise, vrows)
             total += float(nll.sum())

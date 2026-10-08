@@ -18,7 +18,7 @@ import numpy.typing as npt
 from occamworm.analysis.dataset import PRE
 from occamworm.analysis.scoring import NoiseModel, ar1_nll
 from occamworm.baselines.data import M, TaskData, aggregate, compute_stats, predict, trial_designs
-from occamworm.baselines.evaluate import noise_for, rows_of, score_rows
+from occamworm.baselines.evaluate import INNER_NOISE_TRACES, noise_for, rows_of, score_rows
 from occamworm.baselines.indicator import Indicator, estimate_from_autoresponses
 from occamworm.baselines.kernels import Fit, fit_family
 from occamworm.search.views import TrainingView
@@ -112,7 +112,7 @@ class KernelCandidate:
             vrows = rows_of(data, ival)
             animals = np.asarray(data.animals, dtype=object)[data.trace_animal[vrows]]
             for lam, f in fits.items():
-                nll, _, _ = score_rows(data, designs, f, noise_for(data, designs, f, trows), vrows)
+                nll, _, _ = score_rows(data, designs, f, noise_for(data, designs, f, trows, INNER_NOISE_TRACES), vrows)
                 totals[lam] += float(nll.sum())
                 for a, x in zip(animals, nll, strict=True):
                     per_animal[lam][a] = per_animal[lam].get(a, 0.0) + float(x)

@@ -24,6 +24,7 @@ IntArray = npt.NDArray[np.int64]
 BoolArray = npt.NDArray[np.bool_]
 LAM_GRID = (0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)
 NOISE_TRACES = 30_000
+INNER_NOISE_TRACES = 10_000  # inner selection fits noise once per ridge value: ~500k samples for 3 parameters
 
 Fitter = Callable[[PairStats, float, Fit | None], Fit]  # (stats, ridge, warm start) -> fit
 
@@ -58,8 +59,8 @@ def residuals(data: TaskData, designs: FloatArray, fit: Fit, rows: IntArray) -> 
     return data.y[rows].astype(np.float64) - mu, data.m[rows]
 
 
-def noise_for(data: TaskData, designs: FloatArray, fit: Fit, rows: IntArray) -> NoiseModel:
-    sub = _subsample(rows, NOISE_TRACES)
+def noise_for(data: TaskData, designs: FloatArray, fit: Fit, rows: IntArray, n: int = NOISE_TRACES) -> NoiseModel:
+    sub = _subsample(rows, n)
     e, v = residuals(data, designs, fit, sub)
     return fit_noise(e, v, data.s[sub])
 
@@ -110,7 +111,7 @@ def evaluate_fold(
         for lam, f in fits.items():
             # Each ridge value is scored with the noise fitted on its own training residuals, exactly as the
             # outer refit is; one shared noise model would favour whichever ridge value it was fitted on.
-            noise = noise_for(data, designs, f, trows_inner)
+            noise = noise_for(data, designs, f, trows_inner, INNER_NOISE_TRACES)
             nll, _, _ = score_rows(data, designs, f, noise, vrows)
             inner_scores[lam] += float(nll.sum())
         last_inner = fits
