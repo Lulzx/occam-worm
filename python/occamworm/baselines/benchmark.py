@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import multiprocessing as mp
-import os
 import sys
 import time
 import tomllib
@@ -85,7 +84,6 @@ _STATE: dict[str, Any] = {}
 
 
 def _init_worker(root: str, exp: dict[str, Any], cfg: Config) -> None:
-    os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
     r = Path(root)
     w = load_windows(dataset_dir(r, exp["data"]["dataset"]))
     data = build_task(w, eligible_targets(r, exp), cfg.task, cfg.history)

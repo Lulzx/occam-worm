@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 from occamworm.sources.cli import find_root
+
+# One thread per worker process: fold-level parallelism only (set before numpy/jax load in the workers).
+for _var in ("VECLIB_MAXIMUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+os.environ.setdefault("XLA_FLAGS", "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,7 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--history", nargs="+", default=["no", "yes"], choices=["no", "yes"])
     b.add_argument("--families", nargs="+", help="default: the experiment config")
     b.add_argument("--folds", type=int, nargs="+", help="outer fold indices (default: all)")
-    b.add_argument("--workers", type=int, default=max(1, (__import__("os").cpu_count() or 2) - 2))
+    b.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     s = sub.add_parser("summarize", help="paired animal-level comparisons and report from folds.jsonl")
     s.add_argument("--out", type=Path, help="default: artifacts/baselines-v1")
     c = sub.add_parser("control", help="indicator-kinetics control and false-sharing rate (§4.5)")
