@@ -105,9 +105,7 @@ def _flatten(resid: FloatArray, valid: BoolArray) -> Flat:
     return e, e_prev, gap, first, rows
 
 
-def noise_objective(
-    x: FloatArray, flat: Flat, s: FloatArray, scale: float
-) -> tuple[float, FloatArray]:
+def noise_objective(x: FloatArray, flat: Flat, s: FloatArray, scale: float) -> tuple[float, FloatArray]:
     """Mean NLL per observed sample and its gradient in ``x = (log a, log(b/scale), atanh phi)``."""
     e, e_prev, gap, first, rows = flat
     a, b, phi = float(np.exp(x[0])), float(np.exp(x[1]) * scale), float(np.tanh(x[2]))
@@ -141,8 +139,14 @@ def fit_noise(resid: FloatArray, valid: BoolArray, s: FloatArray, max_traces: in
     flat = _flatten(resid, valid)
     best = None
     for x0 in ([0.0, np.log(0.5), 0.5], [np.log(0.5), np.log(0.1), 1.0]):
-        res = optimize.minimize(noise_objective, np.asarray(x0, dtype=np.float64), args=(flat, s, scale), jac=True,
-                                method="L-BFGS-B", options={"ftol": 1e-13, "gtol": 1e-9, "maxiter": 500})
+        res = optimize.minimize(
+            noise_objective,
+            np.asarray(x0, dtype=np.float64),
+            args=(flat, s, scale),
+            jac=True,
+            method="L-BFGS-B",
+            options={"ftol": 1e-13, "gtol": 1e-9, "maxiter": 500},
+        )
         if best is None or res.fun < best.fun:
             best = res
     assert best is not None

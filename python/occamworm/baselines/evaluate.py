@@ -124,10 +124,17 @@ def evaluate_fold(
     mse = float(np.sum(np.where(v, e, 0.0) ** 2) / max(int(v.sum()), 1))
     extra = {k: val for k, val in fit.extra.items() if k == "lam"}
     return FoldResult(
-        family=family, lam_rel=lam_best, inner_scores=inner_scores, noise=noise, animal_nll=animal_nll,
-        animal_traces=animal_traces, animal_samples=animal_samples, mse=mse,
+        family=family,
+        lam_rel=lam_best,
+        inner_scores=inner_scores,
+        noise=noise,
+        animal_nll=animal_nll,
+        animal_traces=animal_traces,
+        animal_samples=animal_samples,
+        mse=mse,
         coverage=interval_coverage(e, v, noise.sigma(data.s[trows])) if trows.size else {},
-        n_params=fit.n_params, fit_extra=extra,
+        n_params=fit.n_params,
+        fit_extra=extra,
     )
 
 

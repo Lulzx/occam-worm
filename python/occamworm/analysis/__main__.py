@@ -27,8 +27,16 @@ def main(argv: list[str] | None = None) -> int:
 
         out = args.out or root / "artifacts" / AUDIT_VERSION
         result = run_audit(root, out)
-        print(json.dumps({"go_no_go": result["go_no_go"]["decision"], "split": result["split_selection"]["chosen"],
-                          "eligible_targets": result["targets"]["eligible_targets"]}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "go_no_go": result["go_no_go"]["decision"],
+                    "split": result["split_selection"]["chosen"],
+                    "eligible_targets": result["targets"]["eligible_targets"],
+                },
+                indent=2,
+            )
+        )
         print(f"Wrote {out}")
         if args.publish:
             (root / "docs" / "data" / "AUDIT_REPORT.md").write_text((out / "report.md").read_text())

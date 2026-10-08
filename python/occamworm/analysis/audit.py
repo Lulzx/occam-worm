@@ -64,8 +64,14 @@ def _quantiles(x: npt.ArrayLike) -> dict[str, float | int | None]:
     if a.size == 0:
         return {"n": 0, "min": None, "q25": None, "median": None, "q75": None, "max": None}
     q = np.quantile(a, [0.0, 0.25, 0.5, 0.75, 1.0])
-    return {"n": int(a.size), "min": float(q[0]), "q25": float(q[1]), "median": float(q[2]), "q75": float(q[3]),
-            "max": float(q[4])}
+    return {
+        "n": int(a.size),
+        "min": float(q[0]),
+        "q25": float(q[1]),
+        "median": float(q[2]),
+        "q75": float(q[3]),
+        "max": float(q[4]),
+    }
 
 
 def _strata(counts: list[int]) -> dict[str, int]:
@@ -133,8 +139,9 @@ def _autoresponse_kinetics(w: Windows, cfg: dict[str, Any], rows: npt.NDArray[np
         "time_to_half_peak_s": _quantiles(rises),
         "half_decay_after_peak_s": _quantiles(half_decays),
         "half_decay_censored": len(peaks) - len(half_decays),
-        "note": ("Window resolution is the 0.5 s volume interval; "
-                 "decay is censored at the window end or next stimulation."),
+        "note": (
+            "Window resolution is the 0.5 s volume interval; decay is censored at the window end or next stimulation."
+        ),
     }
 
 
@@ -181,8 +188,9 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         "autoresponses_valid": int(ar_ok.sum()),
         "autoresponse_window_amplitude_defined": int(tgt_amp_ok.sum()),
         "sham_events": 0,
-        "sham_note": ("The export contains no sham (light-off) stimulations; "
-                      "B0 is fit from pre-stimulus and non-responding data."),
+        "sham_note": (
+            "The export contains no sham (light-off) stimulations; B0 is fit from pre-stimulus and non-responding data."
+        ),
         "window_samples": int(w.valid.size),
         "window_samples_valid_fraction": float(w.valid.mean()),
         "windows_without_baseline": int(np.isnan(w.f0).sum()),
@@ -207,18 +215,28 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         sd = float(np.std(vals, ddof=1)) if n > 1 else float("nan")
         tstat = float(np.mean(vals) / (sd / np.sqrt(n))) if n > 1 and sd > 0 else float("nan")
         vc = _variance_components(list(by_animal.values()))
-        pair_rows.append({
-            "target": tg, "responder": rs, "n_trials": n, "n_animals": len(by_animal),
-            "mean_amplitude": float(np.mean(vals)), "sd_amplitude": sd, "t_statistic": tstat,
-            "between_animal_sd_of_means": float(np.std(means, ddof=1)) if len(means) > 1 else float("nan"),
-            "within_animal_variance": vc[0] if vc else float("nan"),
-            "between_animal_variance": vc[1] if vc else float("nan"),
-        })
+        pair_rows.append(
+            {
+                "target": tg,
+                "responder": rs,
+                "n_trials": n,
+                "n_animals": len(by_animal),
+                "mean_amplitude": float(np.mean(vals)),
+                "sd_amplitude": sd,
+                "t_statistic": tstat,
+                "between_animal_sd_of_means": float(np.std(means, ddof=1)) if len(means) > 1 else float("nan"),
+                "within_animal_variance": vc[0] if vc else float("nan"),
+                "between_animal_variance": vc[1] if vc else float("nan"),
+            }
+        )
     pairs_tbl = pa.Table.from_pylist(pair_rows)
     n_animals_per_pair = [p["n_animals"] for p in pair_rows]
     vc_rows = [p for p in pair_rows if np.isfinite(p["within_animal_variance"])]
-    icc = [p["between_animal_variance"] / (p["between_animal_variance"] + p["within_animal_variance"])
-           for p in vc_rows if p["between_animal_variance"] + p["within_animal_variance"] > 0]
+    icc = [
+        p["between_animal_variance"] / (p["between_animal_variance"] + p["within_animal_variance"])
+        for p in vc_rows
+        if p["between_animal_variance"] + p["within_animal_variance"] > 0
+    ]
     pairs = {
         "pairs_observed": len(pair_rows),
         "pairs_by_animal_count": _strata(n_animals_per_pair),
@@ -231,9 +249,11 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
             "pairs_estimable": len(vc_rows),
             "median_between_animal_fraction": float(np.median(icc)) if icc else None,
             "pooled_within_animal_variance": float(np.mean([p["within_animal_variance"] for p in vc_rows]))
-            if vc_rows else None,
+            if vc_rows
+            else None,
             "pooled_between_animal_variance": float(np.mean([p["between_animal_variance"] for p in vc_rows]))
-            if vc_rows else None,
+            if vc_rows
+            else None,
             "note": "One-way random-effects ANOVA per (target, responder) pair with >= 2 animals and a repeat.",
         },
     }
@@ -250,9 +270,13 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
     for k in np.nonzero(ar_ok)[0]:
         if target_nid[k] is not None:
             target_ar_animals[str(target_nid[k])].add(str(trial_animal[k]))
-    responsive = {(p["target"], p["responder"]) for p in pair_rows
-                  if p["n_animals"] >= cfg["responder_min_animals"]
-                  and np.isfinite(p["t_statistic"]) and abs(p["t_statistic"]) >= cfg["responsive_pair_min_abs_t"]}
+    responsive = {
+        (p["target"], p["responder"])
+        for p in pair_rows
+        if p["n_animals"] >= cfg["responder_min_animals"]
+        and np.isfinite(p["t_statistic"])
+        and abs(p["t_statistic"]) >= cfg["responsive_pair_min_abs_t"]
+    }
     target_rows: list[dict[str, Any]] = []
     for tg in sorted(target_animals):
         multi = sorted(rs for rs, an in resp_animals[tg].items() if len(an) >= cfg["responder_min_animals"])
@@ -260,19 +284,23 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         if len(target_ar_animals[tg]) < cfg["target_min_animals"]:
             reasons.append(f"fewer than {cfg['target_min_animals']} animals with a valid autoresponse")
         if len(multi) < cfg["target_min_responders"]:
-            reasons.append(f"fewer than {cfg['target_min_responders']} identified responders in "
-                           f">= {cfg['responder_min_animals']} animals")
-        target_rows.append({
-            "target": tg,
-            "n_animals": len(target_animals[tg]),
-            "n_animals_valid_autoresponse": len(target_ar_animals[tg]),
-            "n_trials": int(sum(1 for k in range(n_trials) if target_nid[k] == tg)),
-            "responders_any": len(resp_animals[tg]),
-            "responders_multi_animal": len(multi),
-            "responsive_pairs": sum(1 for rs in multi if (tg, rs) in responsive),
-            "eligible": not reasons,
-            "exclusion_reasons": reasons,
-        })
+            reasons.append(
+                f"fewer than {cfg['target_min_responders']} identified responders in "
+                f">= {cfg['responder_min_animals']} animals"
+            )
+        target_rows.append(
+            {
+                "target": tg,
+                "n_animals": len(target_animals[tg]),
+                "n_animals_valid_autoresponse": len(target_ar_animals[tg]),
+                "n_trials": int(sum(1 for k in range(n_trials) if target_nid[k] == tg)),
+                "responders_any": len(resp_animals[tg]),
+                "responders_multi_animal": len(multi),
+                "responsive_pairs": sum(1 for rs in multi if (tg, rs) in responsive),
+                "eligible": not reasons,
+                "exclusion_reasons": reasons,
+            }
+        )
     eligible = [r["target"] for r in target_rows if r["eligible"]]
     targets = {
         "identified_targets": len(target_rows),
@@ -345,18 +373,22 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         cov = target_coverage(split, elig_animals)
         for row in cov:
             coverage_rows.append({"scheme": sch["name"], **row})
-        schemes.append({
-            **spec.to_json(),
-            "n_outer_folds": len(split.folds),
-            "eligible_targets_covered": sum(r["covered"] for r in cov),
-            "eligible_targets_tested_without_inner_coverage": sum(
-                1 for r in cov if r["outer_test_folds"] and not r["covered"]),
-            "median_test_animals_per_target": float(np.median([r["test_animals"] for r in cov])) if cov else None,
-        })
+        schemes.append(
+            {
+                **spec.to_json(),
+                "n_outer_folds": len(split.folds),
+                "eligible_targets_covered": sum(r["covered"] for r in cov),
+                "eligible_targets_tested_without_inner_coverage": sum(
+                    1 for r in cov if r["outer_test_folds"] and not r["covered"]
+                ),
+                "median_test_animals_per_target": float(np.median([r["test_animals"] for r in cov])) if cov else None,
+            }
+        )
     best = max(schemes, key=lambda s: (s["eligible_targets_covered"], -s["n_outer_folds"]))
     covered_best = {r["target"] for r in coverage_rows if r["scheme"] == best["name"] and r["covered"]}
-    go_targets = sorted(r["target"] for r in target_rows
-                        if r["eligible"] and r["responsive_pairs"] > 0 and r["target"] in covered_best)
+    go_targets = sorted(
+        r["target"] for r in target_rows if r["eligible"] and r["responsive_pairs"] > 0 and r["target"] in covered_best
+    )
     split_selection = {
         "rule": cfg["scheme_selection_rule"],
         "chosen": best["name"],
@@ -364,10 +396,12 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         "decided_before_any_model_scored": True,
     }
     go = {
-        "criterion": ("at least one specified collection of stimulus targets admits animal-held-out evaluation with "
-                      "nontrivial response variability: eligible targets covered by the chosen split that have at "
-                      f"least one responder with |t| >= {cfg['responsive_pair_min_abs_t']} across "
-                      f">= {cfg['responder_min_animals']} animals"),
+        "criterion": (
+            "at least one specified collection of stimulus targets admits animal-held-out evaluation with "
+            "nontrivial response variability: eligible targets covered by the chosen split that have at "
+            f"least one responder with |t| >= {cfg['responsive_pair_min_abs_t']} across "
+            f">= {cfg['responder_min_animals']} animals"
+        ),
         "targets": go_targets,
         "decision": "go" if go_targets else "no-go",
     }

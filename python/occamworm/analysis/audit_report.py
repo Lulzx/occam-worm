@@ -16,8 +16,10 @@ def _fmt(x: Any) -> str:
 def _q(d: dict[str, Any]) -> str:
     if not d.get("n"):
         return "no data"
-    return (f"n={d['n']}, median {_fmt(d['median'])} (IQR {_fmt(d['q25'])}–{_fmt(d['q75'])}, "
-            f"range {_fmt(d['min'])}–{_fmt(d['max'])})")
+    return (
+        f"n={d['n']}, median {_fmt(d['median'])} (IQR {_fmt(d['q25'])}–{_fmt(d['q75'])}, "
+        f"range {_fmt(d['min'])}–{_fmt(d['max'])})"
+    )
 
 
 def _table(rows: list[dict[str, Any]], cols: list[str]) -> str:
@@ -50,23 +52,22 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
         f"- Animals by genotype: {_kv(c['animals_by_genotype'])}. {c['genotype_coverage_note']}",
         f"- Animal identity: {c['animal_id_assumption']}.",
         f"- Trials by target code: {_kv(c['trials_by_target_code'])}.",
-        f"- Identified stimulation targets: {c['identified_targets']} "
-        f"({c['trials_with_identified_target']} trials).",
+        f"- Identified stimulation targets: {c['identified_targets']} ({c['trials_with_identified_target']} trials).",
         f"- ROIs {c['rois']}; label status: {_kv(c['roi_label_status'])}.",
         "",
         "## Inclusion flowchart",
         "",
         "```mermaid",
         "flowchart TD",
-        f"    A[\"{c['trials']} trials, {c['animals']} animals\"] --> B[\"{c['trials_with_identified_target']} "
-        "trials with an identified target\"]",
-        f"    B --> C[\"{t['identified_targets']} identified targets\"]",
-        f"    C --> D[\"{t['eligible_targets']} eligible targets\"]",
-        f"    D --> E[\"{t['eligible_with_responsive_pair']} with a responsive multi-animal pair\"]",
-        f"    E --> F[\"{len(go['targets'])} covered by split {sel['chosen']}\"]",
+        f'    A["{c["trials"]} trials, {c["animals"]} animals"] --> B["{c["trials_with_identified_target"]} '
+        'trials with an identified target"]',
+        f'    B --> C["{t["identified_targets"]} identified targets"]',
+        f'    C --> D["{t["eligible_targets"]} eligible targets"]',
+        f'    D --> E["{t["eligible_with_responsive_pair"]} with a responsive multi-animal pair"]',
+        f'    E --> F["{len(go["targets"])} covered by split {sel["chosen"]}"]',
     ]
     for i, (reason, n) in enumerate(t["exclusions"].items()):
-        lines.append(f"    C -. \"{n} excluded\" .-> X{i}[\"{reason}\"]")
+        lines.append(f'    C -. "{n} excluded" .-> X{i}["{reason}"]')
     lines += [
         "```",
         "",
@@ -115,8 +116,11 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
         f"- Pairs by number of animals: {_kv(p['pairs_by_animal_count'])}.",
         f"- Pairs by number of trials: {_kv(p['pairs_by_trial_count'])}.",
         "- Pairs with at least k animals: "
-        + ", ".join(f"k={k}: {n} ({p['fraction_pairs_with_min_animals'][k]:.1%})"
-                    for k, n in p["pairs_with_min_animals"].items()) + ".",
+        + ", ".join(
+            f"k={k}: {n} ({p['fraction_pairs_with_min_animals'][k]:.1%})"
+            for k, n in p["pairs_with_min_animals"].items()
+        )
+        + ".",
         f"- Distinct responders per target: {_q(t['distinct_responders_per_target'])}; observed in >= "
         f"{r['config']['responder_min_animals']} animals: {_q(t['multi_animal_responders_per_target'])}.",
         f"- Trial-to-trial vs animal-to-animal variance ({vd['pairs_estimable']} estimable pairs): median "
@@ -142,9 +146,11 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
     ]
     ix = r["id_intersection"]
     if ix["status"] == "computed":
-        lines.append(f"- Atlas {ix['atlas_ids']}, anatomy {ix['anatomy_ids']}, molecular {ix['molecular_ids']}; "
-                     f"atlas∩anatomy {ix['atlas_and_anatomy']}, atlas∩molecular {ix['atlas_and_molecular']}, "
-                     f"all three {ix['all_three']}.")
+        lines.append(
+            f"- Atlas {ix['atlas_ids']}, anatomy {ix['anatomy_ids']}, molecular {ix['molecular_ids']}; "
+            f"atlas∩anatomy {ix['atlas_and_anatomy']}, atlas∩molecular {ix['atlas_and_molecular']}, "
+            f"all three {ix['all_three']}."
+        )
         if ix["atlas_not_in_anatomy"]:
             lines.append(f"- Atlas IDs absent from the anatomy: {', '.join(ix['atlas_not_in_anatomy'])}.")
     else:
@@ -155,16 +161,34 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
         "",
         f"Rule: {sel['rule']}. Chosen: **{sel['chosen']}**.",
         "",
-        _table(sel["schemes"], ["name", "outer", "n_outer_folds", "inner_folds", "eligible_targets_covered",
-                                "eligible_targets_tested_without_inner_coverage", "median_test_animals_per_target"]),
+        _table(
+            sel["schemes"],
+            [
+                "name",
+                "outer",
+                "n_outer_folds",
+                "inner_folds",
+                "eligible_targets_covered",
+                "eligible_targets_tested_without_inner_coverage",
+                "median_test_animals_per_target",
+            ],
+        ),
         "",
         "Per-target fold coverage: `fold_coverage.parquet`.",
         "",
         "## Eligible targets",
         "",
-        _table([x for x in target_rows if x["eligible"]],
-               ["target", "n_animals", "n_animals_valid_autoresponse", "n_trials", "responders_multi_animal",
-                "responsive_pairs"]),
+        _table(
+            [x for x in target_rows if x["eligible"]],
+            [
+                "target",
+                "n_animals",
+                "n_animals_valid_autoresponse",
+                "n_trials",
+                "responders_multi_animal",
+                "responsive_pairs",
+            ],
+        ),
         "",
         f"Go/no-go criterion: {go['criterion']}. Targets: {', '.join(go['targets']) or 'none'}.",
         "",

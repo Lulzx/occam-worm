@@ -163,7 +163,9 @@ def build_task(
 
     win_trial_pos = trial_pos[w.trial_index]
     resp = np.nonzero(
-        (win_trial_pos >= 0) & ~w.is_target & np.array([n is not None for n in w.neuron_id])
+        (win_trial_pos >= 0)
+        & ~w.is_target
+        & np.array([n is not None for n in w.neuron_id])
         & w.valid[:, PRE:].any(axis=1)
     )[0]
     resp = resp[[str(w.neuron_id[r]) != str(target_nid[w.trial_index[r]]) for r in resp]]
@@ -269,8 +271,15 @@ def compute_stats(data: TaskData, designs: FloatArray) -> Stats:
         yy[a] += float((yv**2).sum())
         nn[a] += float(mm.sum())
     return Stats(
-        entry_animal=uniq // len(data.pairs), entry_pair=uniq % len(data.pairs), G=G, XQ=XQ, Xy=Xy, QQ=QQ, Qy=Qy,
-        yy=yy, n=nn,
+        entry_animal=uniq // len(data.pairs),
+        entry_pair=uniq % len(data.pairs),
+        G=G,
+        XQ=XQ,
+        Xy=Xy,
+        QQ=QQ,
+        Qy=Qy,
+        yy=yy,
+        n=nn,
     )
 
 
@@ -298,8 +307,16 @@ def aggregate(stats: Stats, animals: BoolArray, n_pairs: int) -> PairStats:
     np.add.at(Xy, p, stats.Xy[sel])
     present = np.zeros(n_pairs, dtype=bool)
     present[p] = True
-    return PairStats(G, XQ, Xy, stats.QQ[animals].sum(0), stats.Qy[animals].sum(0), float(stats.yy[animals].sum()),
-                     float(stats.n[animals].sum()), present)
+    return PairStats(
+        G,
+        XQ,
+        Xy,
+        stats.QQ[animals].sum(0),
+        stats.Qy[animals].sum(0),
+        float(stats.yy[animals].sum()),
+        float(stats.n[animals].sum()),
+        present,
+    )
 
 
 def predict(

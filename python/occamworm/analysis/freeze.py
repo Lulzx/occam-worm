@@ -26,17 +26,26 @@ def freeze_split(root: Path, audit_path: Path | None = None, out_dir: Path | Non
     ids = [str(x) for x in trials["trial_id"]]
     if len(set(ids)) != len(ids):
         raise ValueError("duplicate trial ids in the dataset")
-    check_trials(split, dict(zip(ids, map(str, trials["animal_id"]), strict=True)),
-                 dict(zip(ids, map(str, trials["session_id"]), strict=True)))
+    check_trials(
+        split,
+        dict(zip(ids, map(str, trials["animal_id"]), strict=True)),
+        dict(zip(ids, map(str, trials["session_id"]), strict=True)),
+    )
     out_dir = out_dir or root / "data" / "splits" / f"{audit['dataset']}-{chosen}"
     path = write_split(split, audit["dataset_manifest_sha256"], out_dir)
     sizes = np.array([len(f.test) for f in split.folds])
-    (out_dir / "provenance.json").write_text(json.dumps({
-        "audit": str(audit_path.relative_to(root)) if audit_path.is_relative_to(root) else str(audit_path),
-        "audit_code_revision": audit["code_revision"],
-        "selection_rule": audit["split_selection"]["rule"],
-        "chosen": chosen,
-        "outer_folds": len(split.folds),
-        "test_animals_per_fold": [int(sizes.min()), int(sizes.max())],
-    }, indent=2) + "\n")
+    (out_dir / "provenance.json").write_text(
+        json.dumps(
+            {
+                "audit": str(audit_path.relative_to(root)) if audit_path.is_relative_to(root) else str(audit_path),
+                "audit_code_revision": audit["code_revision"],
+                "selection_rule": audit["split_selection"]["rule"],
+                "chosen": chosen,
+                "outer_folds": len(split.folds),
+                "test_animals_per_fold": [int(sizes.min()), int(sizes.max())],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
     return path

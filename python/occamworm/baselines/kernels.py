@@ -98,6 +98,7 @@ def fit_independent(ps: PairStats, lam_rel: float) -> Fit:
 
 def _top_vectors(c: FloatArray, groups: IntArray | None, n_groups: int, k: int) -> FloatArray:
     """Leading right singular vectors of the rows of ``c`` (per group if given); deterministic sign."""
+
     def lead(rows: FloatArray, kk: int) -> FloatArray:
         if rows.shape[0] == 0 or not np.any(rows):
             v = np.zeros((M, kk))
@@ -159,8 +160,7 @@ def fit_shared(ps: PairStats, pair_target: IntArray, n_targets: int, lam_rel: fl
         prev = cur
     used = np.unique(pair_target[ps.present])
     n_params = used.size * M + int(ps.present.sum()) * n_coef + beta.size
-    return Fit("B1d" if delays else "B1", c, beta, cur, n_params, it,
-               {"lam": lam, "kernels": h, "pair_coef": coef})
+    return Fit("B1d" if delays else "B1", c, beta, cur, n_params, it, {"lam": lam, "kernels": h, "pair_coef": coef})
 
 
 def fit_lowrank(ps: PairStats, k: int, lam_rel: float) -> Fit:

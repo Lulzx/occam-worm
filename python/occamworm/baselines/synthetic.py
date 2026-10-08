@@ -102,12 +102,24 @@ def generate(spec: SyntheticSpec, kernels: FloatArray | None = None) -> tuple[Ta
     y = y_clean + spec.noise_a * s[:, None] * _ar1(rng, n_tr, spec.noise_phi)
     m = rng.random((n_tr, POST)) >= spec.missing
     data = TaskData(
-        task=spec.task, history=False, dt=spec.dt, animals=animals, targets=targets, pairs=pairs,
+        task=spec.task,
+        history=False,
+        dt=spec.dt,
+        animals=animals,
+        targets=targets,
+        pairs=pairs,
         pair_target=np.repeat(np.arange(spec.n_targets), spec.n_responders).astype(np.int64),
         trial_ids=[f"syn:trial{n}" for n in range(n_trials)],
-        trial_animal=np.array(trial_animal, dtype=np.int64), trial_target=np.array(trial_target, dtype=np.int64),
-        trial_input=u_all if spec.task == "T2a" else np.zeros_like(u_all), trial_z=np.array(z),
-        trace_trial=np.array(tt, dtype=np.int64), trace_pair=np.array(tp, dtype=np.int64),
-        y=y.astype(np.float32), m=m, s=s, pre_slope=np.zeros(n_tr), meta={"synthetic": spec.truth},
+        trial_animal=np.array(trial_animal, dtype=np.int64),
+        trial_target=np.array(trial_target, dtype=np.int64),
+        trial_input=u_all if spec.task == "T2a" else np.zeros_like(u_all),
+        trial_z=np.array(z),
+        trace_trial=np.array(tt, dtype=np.int64),
+        trace_pair=np.array(tp, dtype=np.int64),
+        y=y.astype(np.float32),
+        m=m,
+        s=s,
+        pre_slope=np.zeros(n_tr),
+        meta={"synthetic": spec.truth},
     )
     return data, k

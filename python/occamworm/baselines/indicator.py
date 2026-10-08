@@ -49,8 +49,12 @@ class Indicator:
         return self.readout(out)
 
     def to_json(self) -> dict[str, Any]:
-        return {"family": "difference_of_exponentials", "tau_r_s": self.tau_r, "tau_d_s": self.tau_d,
-                "c_sat": self.c_sat}
+        return {
+            "family": "difference_of_exponentials",
+            "tau_r_s": self.tau_r,
+            "tau_d_s": self.tau_d,
+            "c_sat": self.c_sat,
+        }
 
 
 def difference_of_exponentials(t: npt.ArrayLike, tau_r: float, tau_d: float) -> FloatArray:
@@ -88,7 +92,11 @@ def fit_to_mean_response(mean: FloatArray, dt: float) -> tuple[Indicator, float]
 
 
 def estimate_from_autoresponses(
-    traces: FloatArray, valid: npt.NDArray[np.bool_], animals: Sequence[str], dt: float, reps: int = 200,
+    traces: FloatArray,
+    valid: npt.NDArray[np.bool_],
+    animals: Sequence[str],
+    dt: float,
+    reps: int = 200,
     seed: int = 20261008,
 ) -> dict[str, Any]:
     """Fit the indicator to the amplitude-normalized mean autoresponse (post-stimulus samples, t >= 0).
