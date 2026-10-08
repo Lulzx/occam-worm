@@ -2,7 +2,7 @@
 
 Searches a small typed language of local neural update rules, runs candidates on the *C. elegans* connectome, and keeps only rules that predict causal responses in animals they never saw. Brevity is a tie-breaker, never a substitute for held-out accuracy.
 
-**Status:** spec v0.4.1. M0 in progress: data acquisition ([OW-001](docs/planning/tickets/OW-001.md)) the trial-level atlas importer ([OW-002](docs/planning/tickets/OW-002.md)) and annotation mapping ([OW-013](docs/planning/tickets/OW-013.md)) are done.
+**Status:** spec v0.4.1. Done: data acquisition, trial import, M0 audit (**go**), animal-wise splits and annotation mapping (OW-001–004, OW-013). In progress: scoring and baselines (OW-005–007), rule language (OW-008–010).
 
 ## Quickstart
 
