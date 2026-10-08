@@ -2,6 +2,10 @@
 
 > Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: "Changes in" sections
 
+## Implementation additions after 0.4.1 (2026-10-08)
+
+No methods, gates, metrics or claims changed. OW-008, the C++ half of OW-009 and OW-010 add three things to the documents: [WRL_SYNTAX.md](../language/WRL_SYNTAX.md) (the concrete WRL v0.1 syntax, canonical IR JSON schema, bit code and exact execution semantics, which fix the open choices of [§5](../language/GRAMMAR.md) and [§6](../runtime/SIM_SEMANTICS.md)), an "Implemented (OW-009)" note in [SIM_SEMANTICS.md](../runtime/SIM_SEMANTICS.md), and the implemented C++26 feature allowlist, floating-point policy and local build commands in [REPRODUCIBILITY.md](../engineering/REPRODUCIBILITY.md).
+
 ## Changes in 0.4.1 (2026-10-08)
 
 1. **C++26 replaces C++20** for the rule-language toolchain, enumeration, reference interpreter, CLI and any optimized runtime ([§14.8](../engineering/REPRODUCIBILITY.md), [§14.2](../engineering/ARCHITECTURE.md)). A feature allowlist restricts code to what both pinned compilers implement, and a new risk entry covers uneven compiler support ([§19](../planning/RISKS.md)). No methods, gates, metrics or claims changed.
