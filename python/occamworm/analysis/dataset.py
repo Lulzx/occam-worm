@@ -25,11 +25,16 @@ import pyarrow.parquet as pq
 from occamworm.sources.cli import find_root
 
 DATASET = "randi2023-wt-v1"
-WINDOW_VERSION = "windows-v1"
+WINDOW_VERSION = "windows-v2"
 PRE = 10  # volumes before the stimulation frame (5 s at 2 Hz)
 POST = 60  # volumes from the stimulation frame on (30 s at 2 Hz)
 MIN_BASELINE_SAMPLES = 4
 MIN_F0 = 1e-6
+# Volumes around the stimulation frame carry a stimulation-light artifact in every ROI (audit-v2: mean dF/F
+# jumps by ~0.03 in responders and ~0.3 in targets at offset 0, decaying within two volumes). They are masked in
+# every window and excluded from the baseline (§2.4).
+ARTIFACT_OFFSETS = (-1, 0, 1)
+PROFILE_OFFSETS = np.arange(-3, 5)
 
 FloatArray = npt.NDArray[np.float64]
 BoolArray = npt.NDArray[np.bool_]
@@ -53,6 +58,8 @@ class Windows:
     pre_sd: npt.NDArray[np.float32]
     volume_interval_s: float
     meta: dict[str, Any] = field(default_factory=dict)
+    # mean unmasked dF/F at PROFILE_OFFSETS: row 0 stimulated ROI, row 1 other ROIs (artifact evidence)
+    artifact_profile: FloatArray = field(default_factory=lambda: np.zeros((2, PROFILE_OFFSETS.size)))
 
     @property
     def offsets(self) -> IntArray:
@@ -117,6 +124,8 @@ def build_windows(directory: Path) -> Windows:
     length = PRE + POST
 
     parts: dict[str, list[Any]] = {k: [] for k in ("trial", "roi", "nid", "tgt", "dff", "valid", "f0", "sd")}
+    art_sum = np.zeros((2, PROFILE_OFFSETS.size))  # rows: stimulated ROI, other ROIs
+    art_cnt = np.zeros((2, PROFILE_OFFSETS.size))
     by_recording: dict[str, list[int]] = {}
     for k, rec in enumerate(trials["recording_id"]):
         by_recording.setdefault(str(rec), []).append(k)
@@ -135,6 +144,8 @@ def build_windows(directory: Path) -> Windows:
             inside = (frames >= 0) & (frames < n_frames) & ((frames < stop) | (frames < stim))
             win = np.full((length, n_rois), np.nan)
             win[inside] = dense[frames[inside]]
+            raw_profile = win[PRE + PROFILE_OFFSETS].copy()
+            win[PRE + np.asarray(ARTIFACT_OFFSETS)] = np.nan
             pre = win[:PRE]
             n_pre = np.sum(~np.isnan(pre), axis=0)
             with np.errstate(invalid="ignore", divide="ignore"):
@@ -146,6 +157,13 @@ def build_windows(directory: Path) -> Windows:
             dff = np.where(valid, dff, 0.0)
             target = trials["stim_target_roi"][k]
             target_roi = -1 if target is None or (isinstance(target, float) and np.isnan(target)) else int(target)
+            with np.errstate(invalid="ignore", divide="ignore"):
+                prof = (raw_profile - f0) / f0
+            prof_ok = ~np.isnan(prof) & usable[None, :]
+            is_t = np.arange(n_rois) == target_roi
+            for row, sel in ((0, is_t), (1, ~is_t)):
+                art_sum[row] += np.where(prof_ok[:, sel], prof[:, sel], 0.0).sum(axis=1)
+                art_cnt[row] += prof_ok[:, sel].sum(axis=1)
             rois = np.arange(n_rois)
             parts["trial"].append(np.full(n_rois, k))
             parts["roi"].append(rois)
@@ -169,6 +187,7 @@ def build_windows(directory: Path) -> Windows:
         f0=np.concatenate(parts["f0"]),
         pre_sd=np.concatenate(parts["sd"]),
         volume_interval_s=float(intervals[0]),
+        artifact_profile=art_sum / np.maximum(art_cnt, 1),
     )
 
 
@@ -179,6 +198,7 @@ def _cache_key(directory: Path) -> dict[str, Any]:
         "pre": PRE,
         "post": POST,
         "min_baseline_samples": MIN_BASELINE_SAMPLES,
+        "artifact_offsets": list(ARTIFACT_OFFSETS),
         "input_manifest_sha256": _manifest_digest(directory),
     }
 
@@ -208,6 +228,7 @@ def load_windows(directory: Path | None = None, cache_dir: Path | None = None) -
                 pre_sd=z["pre_sd"],
                 volume_interval_s=float(z["volume_interval_s"]),
                 meta=key,
+                artifact_profile=z["artifact_profile"],
             )
     w = build_windows(directory)
     w.meta = key
@@ -224,6 +245,7 @@ def load_windows(directory: Path | None = None, cache_dir: Path | None = None) -
         f0=w.f0,
         pre_sd=w.pre_sd,
         volume_interval_s=np.float64(w.volume_interval_s),
+        artifact_profile=w.artifact_profile,
     )
     tmp.replace(data_path)
     meta_path.write_text(json.dumps(key, indent=2) + "\n")

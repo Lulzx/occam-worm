@@ -15,7 +15,7 @@ from occamworm.analysis.splits import SplitSpec, build_split, check_trials, writ
 
 
 def freeze_split(root: Path, audit_path: Path | None = None, out_dir: Path | None = None) -> Path:
-    audit_path = audit_path or root / "artifacts" / "audit-v1" / "audit.json"
+    audit_path = audit_path or root / "artifacts" / "audit-v2" / "audit.json"
     audit = json.loads(audit_path.read_text())
     directory = dataset_dir(root, audit["dataset"])
     trials, _, animals = load_tables(directory)

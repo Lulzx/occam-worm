@@ -145,6 +145,7 @@ def fit_noise(resid: FloatArray, valid: BoolArray, s: FloatArray, max_traces: in
             args=(flat, s, scale),
             jac=True,
             method="L-BFGS-B",
+            bounds=[(-12.0, 6.0), (-20.0, 6.0), (-4.0, 4.0)],
             options={"ftol": 1e-13, "gtol": 1e-9, "maxiter": 500},
         )
         if best is None or res.fun < best.fun:

@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1.0",
-  "description": "M0 audit thresholds (§2.3, §4.2). Frozen before any model is scored; changing them requires a new audit version.",
-  "response_offsets": [1, 30],
+  "description": "M0 audit thresholds (§2.3, §4.2). Frozen before any model is scored; changing them requires a new audit version. audit-v2: response window starts at offset 2 because offsets -1..1 are masked as stimulation artifact.",
+  "response_offsets": [2, 30],
   "min_response_valid_fraction": 0.5,
   "autoresponse_min_valid_fraction": 0.8,
   "autoresponse_min_peak_over_noise": 3.0,

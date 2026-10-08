@@ -18,10 +18,10 @@ import numpy.typing as npt
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from occamworm.analysis.dataset import POST, PRE, Windows, dataset_dir, load_windows
+from occamworm.analysis.dataset import ARTIFACT_OFFSETS, POST, PRE, PROFILE_OFFSETS, Windows, dataset_dir, load_windows
 from occamworm.analysis.splits import SplitSpec, build_split, target_coverage
 
-AUDIT_VERSION = "audit-v1"
+AUDIT_VERSION = "audit-v2"
 INDICATOR = {
     "name": "GCaMP6s, nuclear-localized",
     "strain": "AML462 (pan-neuronal nuclear GCaMP6s, GUR-3/PRDX-2 optogenetics, NeuroPAL)",
@@ -424,6 +424,13 @@ def run_audit(root: Path, out_dir: Path, windows: Windows | None = None) -> dict
         "targets": targets,
         "stimulus": stimulus,
         "drift": drift,
+        "stimulation_artifact": {
+            "offsets": PROFILE_OFFSETS.tolist(),
+            "mean_dff_stimulated_roi": w.artifact_profile[0].tolist(),
+            "mean_dff_other_rois": w.artifact_profile[1].tolist(),
+            "masked_offsets": list(ARTIFACT_OFFSETS),
+            "note": "Unmasked mean dF/F around the stimulation frame; the masked offsets are excluded everywhere.",
+        },
         "indicator": {**INDICATOR, "autoresponse_kinetics": kinetics},
         "id_intersection": intersection,
         "split_selection": split_selection,

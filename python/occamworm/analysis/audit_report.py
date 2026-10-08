@@ -98,6 +98,24 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
         f"{_q(s['recording_duration_s'])}.",
         f"- Trials whose previous target had the same label: {s['trials_whose_previous_target_label_is_the_same']}.",
         "",
+        "## Stimulation artifact",
+        "",
+        _table(
+            [
+                {"offset (volumes)": o, "stimulated ROI": a, "other ROIs": b}
+                for o, a, b in zip(
+                    r["stimulation_artifact"]["offsets"],
+                    r["stimulation_artifact"]["mean_dff_stimulated_roi"],
+                    r["stimulation_artifact"]["mean_dff_other_rois"],
+                    strict=True,
+                )
+            ],
+            ["offset (volumes)", "stimulated ROI", "other ROIs"],
+        ),
+        "",
+        f"Mean unmasked dF/F. Offsets {r['stimulation_artifact']['masked_offsets']} jump in every ROI, so they are "
+        "masked in all windows and excluded from baselines.",
+        "",
         "## Within-recording drift",
         "",
         "Per-animal least-squares slopes, mean across animals with an animal-level bootstrap 95% interval.",

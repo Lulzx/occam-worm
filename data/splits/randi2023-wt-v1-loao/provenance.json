@@ -1,6 +1,6 @@
 {
-  "audit": "artifacts/audit-v1/audit.json",
-  "audit_code_revision": "5822ecc1dd2f213cbb89c16801e7254e73debc83",
+  "audit": "artifacts/audit-v2/audit.json",
+  "audit_code_revision": "5b317a0d12076c0bb45c9a96eb163ca309ce438e",
   "selection_rule": "most eligible targets covered (tested in an outer fold and fit+validated in at least one inner fold of every outer fold that tests it); ties broken by fewer outer folds",
   "chosen": "loao",
   "outer_folds": 113,
