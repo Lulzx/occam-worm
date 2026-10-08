@@ -13,4 +13,4 @@ Test suites. See the test matrix in the spec.
 
 Spec: [§16](../docs/evaluation/TESTING.md)
 
-Status: C++ tests, conformance suite (C++ reference only) and the parser fuzz target are implemented; the other directories are not.
+Status: C++ tests, the conformance suite (C++, scalar Python and JAX), simulator and fitting unit tests, parameter-recovery tests and the parser fuzz target are implemented; the other directories are not.

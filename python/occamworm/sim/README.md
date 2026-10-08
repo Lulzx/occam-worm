@@ -18,6 +18,8 @@ Status: implemented (OW-009). 52/52 conformance cases pass in both implementatio
 | `result.py`, `cpp.py` | `SimResult`, deviation helpers, and `simulate_cpp` (runs `ow sim run`). |
 
 ```python
+import jax
+
 from occamworm.sim import jaxsim
 from occamworm.sim.ir import compile_file
 from occamworm.sim.graph import build_graph
