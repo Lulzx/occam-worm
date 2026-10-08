@@ -292,7 +292,9 @@ private:
             ++summary_.rejected_budget;
             return;
         }
-        if (!seen_.insert(ir.program_hash).second) {
+        // C++26 (P2169): `_` names the unused iterator of the insert result.
+        const auto [_, inserted] = seen_.insert(ir.program_hash);
+        if (!inserted) {
             ++summary_.duplicates;
             return;
         }
