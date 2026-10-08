@@ -9,6 +9,9 @@
 //     floating-point summation order independently of the order in which edges were listed.
 //   * A gap junction {a, b, g} is undirected and stored twice, once in each endpoint's row of the gap CSR
 //     (`gap_offsets`, `gap_neighbor`, `gap_conductance`), sorted by (neighbor index, conductance).
+//   * A modulatory edge pre -> post (putative extrasynaptic route, e.g. a neuropeptide-receptor pair) is
+//     unsigned and undelayed. Like a chemical edge it is stored in the row of `post` of its own CSR
+//     (`mod_offsets`, `mod_pre`, `mod_weight`), sorted by (pre index, weight); only `sum_in(r, mod)` reads it.
 //   * CSR orientation version: kCsrOrientationVersion.
 
 #include <cstdint>
@@ -43,13 +46,21 @@ struct GapEdgeSpec {
     double conductance = 0.0;  // non-negative, units s^-1 when states are dimensionless rates
 };
 
+struct ModulatoryEdgeSpec {
+    std::string pre;
+    std::string post;
+    double weight = 1.0;  // non-negative magnitude; the sign is left to the program
+};
+
 struct GraphSpec {
     std::vector<NeuronSpec> neurons;
     std::vector<ChemicalEdgeSpec> chemical;
     std::vector<GapEdgeSpec> gap;
+    std::vector<ModulatoryEdgeSpec> modulatory;
 };
 
-// {"neurons":[{"id","type"?}], "chemical":[{"pre","post","weight","sign","delay"}], "gap":[{"a","b","g"}]}
+// {"neurons":[{"id","type"?}], "chemical":[{"pre","post","weight","sign","delay"}], "gap":[{"a","b","g"}],
+//  "modulatory"?:[{"pre","post","weight"?}]}
 GraphSpec graph_spec_from_json(const Json& json);
 Json graph_spec_to_json(const GraphSpec& spec);
 
@@ -79,6 +90,11 @@ public:
     std::vector<std::size_t> gap_offsets;  // size N+1
     std::vector<std::size_t> gap_neighbor;
     std::vector<double> gap_conductance;
+
+    // Modulatory CSR (row = receiving neuron).
+    std::vector<std::size_t> mod_offsets;  // size N+1
+    std::vector<std::size_t> mod_pre;
+    std::vector<double> mod_weight;  // >= 0
 
     int max_edge_delay = 0;
 };

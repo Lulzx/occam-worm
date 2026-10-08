@@ -213,6 +213,12 @@ private:
             case Op::TypeMask: return graph_.types[i] == instr.type_name ? 1.0 : 0.0;
             case Op::SumIn: {
                 double sum = 0.0;
+                if (instr.select == SumSelect::Mod) {
+                    for (std::size_t e = graph_.mod_offsets[i]; e < graph_.mod_offsets[i + 1]; ++e) {
+                        sum += graph_.mod_weight[e] * history(reg, graph_.mod_pre[e], 0, tick);
+                    }
+                    return sum;
+                }
                 for (std::size_t e = graph_.in_offsets[i]; e < graph_.in_offsets[i + 1]; ++e) {
                     const bool excitatory = graph_.sign[e] > 0;
                     if ((instr.select == SumSelect::Exc && !excitatory) || (instr.select == SumSelect::Inh && excitatory)) {

@@ -125,6 +125,13 @@ class JaxSimulator:
                 jnp.asarray(w),
                 jnp.asarray(delay[keep]),
             )
+        mod_pre = np.asarray(graph.mod_pre, dtype=np.int32)
+        self._edges["mod"] = (
+            jnp.asarray(mod_pre),
+            jnp.asarray(_edge_rows(graph.mod_offsets) if graph.mod_offsets else np.zeros(0, dtype=np.int32)),
+            jnp.asarray(np.asarray(graph.mod_weight, dtype=np.float64)),
+            jnp.zeros(mod_pre.shape[0], dtype=jnp.int32),
+        )
         self._all_edges = (jnp.asarray(pre), jnp.asarray(post), jnp.asarray(delay))
         self._gap_row = jnp.asarray(_edge_rows(graph.gap_offsets))
         self._gap_nbr = jnp.asarray(np.asarray(graph.gap_neighbor, dtype=np.int32))

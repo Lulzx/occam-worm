@@ -59,7 +59,7 @@ OP_ATTRS: dict[str, tuple[str, ...]] = {
     "delay": ("register", "ticks"),
     "lut": ("table",),
 }
-SUM_SELECTS = ("exc", "inh", "all")
+SUM_SELECTS = ("exc", "inh", "all", "mod")
 OBSERVATION_OPERATORS = ("identity_v1", "calcium_linear_v1")
 
 

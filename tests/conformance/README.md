@@ -4,7 +4,7 @@
 
 Tickets: [OW-009](../../docs/planning/tickets/OW-009.md) · Spec: [§6.8](../../docs/runtime/SIM_SEMANTICS.md) · Case format and semantics: [WRL_SYNTAX.md](../../docs/language/WRL_SYNTAX.md) §6–§7
 
-Status: 52 cases; the C++ reference interpreter, the scalar Python interpreter and the JAX simulator pass all of them (`pytest tests/conformance`; see [OW-009](../../docs/planning/tickets/OW-009.md)).
+Status: 53 cases; the C++ reference interpreter, the scalar Python interpreter and the JAX simulator pass all of them (`pytest tests/conformance`; see [OW-009](../../docs/planning/tickets/OW-009.md)).
 
 Each `NN-name.json` is self-contained (inline WRL source, graph, stimulus, parameters, `dt`, steps, sampled expected traces, tolerance, and a `derivation` field). Expected values are analytic solutions, exact rational arithmetic on the documented formulas, or hand-derivable dyadic arithmetic; none come from the interpreter. `gen_cases.py` regenerates every file deterministically (`python3 tests/conformance/gen_cases.py`). Run the suite with `ow sim conformance --suite tests/conformance` (also CTest `conformance_suite`).
 
@@ -24,3 +24,4 @@ Each `NN-name.json` is self-contained (inline WRL source, graph, stimulus, param
 | 34–35 | permutation equivariance (G1 mixed circuit, G0 ring) |
 | 36–37 | dt versus dt/2 convergence against analytic solutions |
 | 41–52 | compile errors: units, stability, syntax, tier, name, type and limit |
+| 53 | modulatory edges: `sum_in(v, mod)` apart from chemical edges, repeated edges and self-loops |

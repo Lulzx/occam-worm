@@ -1,4 +1,4 @@
-"""OW-009 done-when, Python half: both Python implementations pass the 52-case suite and agree with C++ (§6.8).
+"""OW-009 done-when, Python half: both Python implementations pass the 53-case suite and agree with C++ (§6.8).
 
 Every non-error case runs through the scalar reference interpreter and the JAX simulator against the analytic
 expected values with the case's own tolerance. Where the ``ow`` binary is present, the same inputs also run through
@@ -40,9 +40,9 @@ ERROR_CASES = cases_of("compile_error")
 RUNNABLE_CASES = TRACE_CASES + PERMUTATION_CASES + CONVERGENCE_CASES
 
 
-def test_suite_has_52_cases() -> None:
-    assert len(ALL_CASES) == 52
-    assert len(TRACE_CASES) + len(PERMUTATION_CASES) + len(CONVERGENCE_CASES) + len(ERROR_CASES) == 52
+def test_suite_has_53_cases() -> None:
+    assert len(ALL_CASES) == 53
+    assert len(TRACE_CASES) + len(PERMUTATION_CASES) + len(CONVERGENCE_CASES) + len(ERROR_CASES) == 53
 
 
 @pytest.mark.parametrize("impl", sorted(IMPLEMENTATIONS))

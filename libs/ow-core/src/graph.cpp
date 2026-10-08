@@ -63,6 +63,15 @@ GraphSpec graph_spec_from_json(const Json& json) {
                 spec.gap.push_back(std::move(edge));
             }
         }
+        if (const Json* modulatory = json.find("modulatory")) {
+            for (const Json& item : modulatory->as_array()) {
+                ModulatoryEdgeSpec edge;
+                edge.pre = require(item, "pre").as_string();
+                edge.post = require(item, "post").as_string();
+                edge.weight = item.find("weight") ? item.at("weight").as_double() : 1.0;
+                spec.modulatory.push_back(std::move(edge));
+            }
+        }
     } catch (const Error& error) {
         if (error.code() == Errc::Json) {
             throw Error(Errc::Graph, "malformed graph description: " + error.message());
@@ -102,6 +111,17 @@ Json graph_spec_to_json(const GraphSpec& spec) {
         gap.push(std::move(item));
     }
     out.set("gap", std::move(gap));
+    if (!spec.modulatory.empty()) {
+        Json modulatory = Json::array();
+        for (const ModulatoryEdgeSpec& e : spec.modulatory) {
+            Json item = Json::object();
+            item.set("pre", e.pre);
+            item.set("post", e.post);
+            item.set("weight", e.weight);
+            modulatory.push(std::move(item));
+        }
+        out.set("modulatory", std::move(modulatory));
+    }
     return out;
 }
 
@@ -228,6 +248,33 @@ Graph Graph::build(const GraphSpec& spec) {
     for (const GapEntry& e : gap) {
         graph.gap_neighbor.push_back(e.neighbor);
         graph.gap_conductance.push_back(e.conductance);
+    }
+
+    struct ModEntry {
+        std::size_t post;
+        std::size_t pre;
+        double weight;
+    };
+    std::vector<ModEntry> mod;
+    for (const ModulatoryEdgeSpec& edge : spec.modulatory) {
+        if (!std::isfinite(edge.weight) || edge.weight < 0.0) {
+            fail("modulatory weight must be finite and non-negative");
+        }
+        mod.push_back({lookup(edge.post), lookup(edge.pre), edge.weight});
+    }
+    std::ranges::sort(mod, [](const ModEntry& l, const ModEntry& r) {
+        return std::tie(l.post, l.pre, l.weight) < std::tie(r.post, r.pre, r.weight);
+    });
+    graph.mod_offsets.assign(n + 1, 0);
+    for (const ModEntry& e : mod) {
+        ++graph.mod_offsets[e.post + 1];
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        graph.mod_offsets[i + 1] += graph.mod_offsets[i];
+    }
+    for (const ModEntry& e : mod) {
+        graph.mod_pre.push_back(e.pre);
+        graph.mod_weight.push_back(e.weight);
     }
     return graph;
 }

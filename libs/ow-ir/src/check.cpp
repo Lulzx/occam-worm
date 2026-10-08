@@ -473,10 +473,11 @@ private:
                 Instr instr;
                 instr.op = Op::SumIn;
                 instr.index = register_arg(call, 0);
-                const std::string& selector = word_arg(call, 1, "exc, inh or all");
+                const std::string& selector = word_arg(call, 1, "exc, inh, all or mod");
                 const auto select = parse_select(selector);
                 if (!select) {
-                    fail(Errc::Type, *call.args[1], "sum_in selector must be exc, inh or all, got '" + selector + "'");
+                    fail(Errc::Type, *call.args[1],
+                         "sum_in selector must be exc, inh, all or mod, got '" + selector + "'");
                 }
                 instr.select = *select;
                 instr.unit = out_.registers[static_cast<std::size_t>(instr.index)].unit;

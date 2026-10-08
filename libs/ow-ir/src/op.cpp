@@ -73,6 +73,7 @@ std::string_view select_name(SumSelect select) {
         case SumSelect::Exc: return "exc";
         case SumSelect::Inh: return "inh";
         case SumSelect::All: return "all";
+        case SumSelect::Mod: return "mod";
     }
     return "?";
 }
@@ -86,6 +87,9 @@ std::optional<SumSelect> parse_select(std::string_view name) {
     }
     if (name == "all") {
         return SumSelect::All;
+    }
+    if (name == "mod") {
+        return SumSelect::Mod;
     }
     return std::nullopt;
 }

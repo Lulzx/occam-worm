@@ -66,7 +66,7 @@ arg     := expr | '[' number (',' number)* ']'          # the list form is only 
 | name of a register, `state(r)` | `state` | attr `register` | register unit | both |
 | `stimulus` | `stimulus` | none | `stimulus_unit` | both |
 | `type_mask(T)` | `type_mask` | attr `type` (a word) | 1 | both |
-| `sum_in(r, exc\|inh\|all)` | `sum_in` | attrs `register`, `select` | `unit(r)` | G1 |
+| `sum_in(r, exc\|inh\|all\|mod)` | `sum_in` | attrs `register`, `select` | `unit(r)` | G1 |
 | `count_in(r, k)` | `count_in` | attrs `register`, `k` (integer >= 0); `r` dimensionless | 1 | G0 |
 | `delay(r, n)` | `delay` | attrs `register`, `ticks` (0..100000) | `unit(r)` | both |
 | `add(a, b, ...)`, `a + b` | `add` | n >= 2, same unit | that unit | both |
@@ -84,7 +84,7 @@ arg     := expr | '[' number (',' number)* ']'          # the list form is only 
 | `decay(x, tau)` | `leaky_integrate(x, 0, tau)` | as above | `unit(x)` | G1 |
 | `euler_leak(x, target, tau)` | `euler_leak` | as `leaky_integrate`; stability bound of §3 | `unit(x)` | G1 |
 
-`sum_in` selectors: `exc` sums only excitatory edges (non-negative contributions), `inh` sums only inhibitory edges (also reported as non-negative magnitudes; the program subtracts them), `all` is the signed sum. This keeps edge signs a property of the graph and the sign constraint of §5.8 a property of the program.
+`sum_in` selectors: `exc` sums only excitatory edges (non-negative contributions), `inh` sums only inhibitory edges (also reported as non-negative magnitudes; the program subtracts them), `all` is the signed sum. This keeps edge signs a property of the graph and the sign constraint of §5.8 a property of the program. `mod` sums the graph's separate modulatory edges (putative extrasynaptic routes such as neuropeptide-receptor pairs): they are unsigned and undelayed, so a rule that uses them supplies the sign through a parameter. The chemical selectors never read modulatory edges, and `count_in` reads only chemical edges.
 
 ### 1.4 Tiers
 
@@ -174,7 +174,8 @@ Rules for consumers:
   "graph": {
     "neurons":  [ {"id": "A", "type": "sensory"} ],                   // order defines the neuron index; type defaults to "generic"
     "chemical": [ {"pre": "A", "post": "B", "weight": 0.5, "sign": 1, "delay": 2} ],   // weight >= 0, sign +1/-1, delay in ticks >= 0
-    "gap":      [ {"a": "A", "b": "B", "g": 2.0} ]                    // undirected, g >= 0 (unit 1/s)
+    "gap":      [ {"a": "A", "b": "B", "g": 2.0} ],                   // undirected, g >= 0 (unit 1/s)
+    "modulatory": [ {"pre": "A", "post": "B", "weight": 3.0} ]        // optional; directed, unsigned, undelayed, weight >= 0
   },
   "stimulus": [ {"neuron": "A", "start": 0, "end": 5, "amplitude": 1.0} ],   // active for ticks start <= t < end
   "params":   { "tau": 0.3 },                      // by source name; must lie inside the declared bounds
@@ -188,7 +189,7 @@ Rules for consumers:
 
 ### 6.2 Graph arrays and summation order
 
-Chemical edges are stored CSR by **postsynaptic** neuron: row `i` lists the inputs of neuron `i`, entries sorted ascending by `(pre index, delay, sign, weight)` (orientation version 1, `libs/ow-core/include/occamworm/core/graph.hpp`). Gap junctions are stored in both endpoint rows, sorted by `(neighbour index, g)`. **All neighbourhood sums are accumulated sequentially in row order starting from `0.0`.** A second implementation may sum in another order within the conformance tolerance; the reference order is the tie-breaker for bit-exact replay.
+Chemical edges are stored CSR by **postsynaptic** neuron: row `i` lists the inputs of neuron `i`, entries sorted ascending by `(pre index, delay, sign, weight)` (orientation version 1, `libs/ow-core/include/occamworm/core/graph.hpp`). Gap junctions are stored in both endpoint rows, sorted by `(neighbour index, g)`. Modulatory edges have their own CSR by receiving neuron, sorted by `(pre index, weight)`. **All neighbourhood sums are accumulated sequentially in row order starting from `0.0`.** A second implementation may sum in another order within the conformance tolerance; the reference order is the tie-breaker for bit-exact replay.
 
 ### 6.3 Timestep order (§6.1)
 
@@ -214,7 +215,7 @@ All values are `float64`. For a neuron `i` at tick `t`, with `H_r[j](s)` the his
 | `state` | `x_r[i](t)` |
 | `stimulus` | `u_i(t)` |
 | `type_mask` | `1.0` if `type(i) == name` (exact string match) else `0.0` |
-| `sum_in(r, sel)` | `acc = 0.0`; for each row entry `e` of neuron `i` in order, with source `j = pre[e]`, `term = weight[e] * H_r[j](t - delay[e])`; `exc`: add `term` if `sign[e] > 0`; `inh`: add `term` if `sign[e] < 0`; `all`: add `term` if `sign[e] > 0`, add `-term` if `sign[e] < 0` |
+| `sum_in(r, sel)` | `acc = 0.0`; for each row entry `e` of neuron `i` in order, with source `j = pre[e]`, `term = weight[e] * H_r[j](t - delay[e])`; `exc`: add `term` if `sign[e] > 0`; `inh`: add `term` if `sign[e] < 0`; `all`: add `term` if `sign[e] > 0`, add `-term` if `sign[e] < 0`; `mod`: over the modulatory row of `i` instead, add `mod_weight[e] * x_r[mod_pre[e]](t)` |
 | `count_in(r, k)` | number of row entries `e` with `H_r[pre[e]](t - delay[e]) == k` exactly, as a float (any sign, any weight) |
 | `delay(r, n)` | `H_r[i](t - n)` |
 | `add` | `a0 + a1`, then `+ a2` ... (left fold) |
@@ -315,7 +316,7 @@ Grammar: a program has `R` registers `r0..` (dimensionless, init from `register_
 | parameters | `gamma0(P)` + per parameter: unit + 1 (trainable flag) + (trainable: constant(lower) + constant(upper); fixed: constant(value)) |
 | instructions | `gamma0(count)` + per instruction: kind code + attributes + argument references |
 | kind codes | `state` = `00`, `const` = `01`, `param` = `100`, `add` = `101`, `mul` = `110`, every other op = `111` + 5-bit index (8 bits): `stimulus 0, type_mask 1, sum_in 2, count_in 3, delay 4, neg 5, abs 6, min 7, max 8, clamp 9, relu 10, tanh 11, sigmoid 12, threshold 13, select 14, lut 15, leaky_integrate 16, euler_leak 17` |
-| attributes | `const`: constant + unit; `param`/`state`: `gamma0(index)`; `sum_in`: `gamma0(reg)` + 2; `count_in`: `gamma0(reg) + gamma0(k)`; `delay`: `gamma0(reg) + gamma(ticks)`; `type_mask`: `gamma(len) + 8*len` (dispatch); `lut`: `gamma(len)` + constant per entry (dispatch); `add/mul/min/max`: `gamma(arity - 1)` |
+| attributes | `const`: constant + unit; `param`/`state`: `gamma0(index)`; `sum_in`: `gamma0(reg)` + 2 (four selectors); `count_in`: `gamma0(reg) + gamma0(k)`; `delay`: `gamma0(reg) + gamma(ticks)`; `type_mask`: `gamma(len) + 8*len` (dispatch); `lut`: `gamma(len)` + constant per entry (dispatch); `add/mul/min/max`: `gamma(arity - 1)` |
 | argument reference | `gamma(distance back to the producing instruction)` (>= 1) |
 | writes | per register `gamma(count - id)` |
 | gap | 1 + (present: `gamma0(reg)` + 1 + (scale: `gamma0(param)`)) |

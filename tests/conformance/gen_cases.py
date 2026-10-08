@@ -1385,6 +1385,54 @@ def compile_error_cases():
 
 
 # ---------------------------------------------------------------------------------------------------------------
+# 53: modulatory edges
+# ---------------------------------------------------------------------------------------------------------------
+
+
+def modl(pre, post, weight=1.0):
+    return {"pre": pre, "post": post, "weight": float(weight)}
+
+
+def case_modulatory_sum():
+    ids = ["A", "B", "C", "D"]
+    edges = [chem("A", "B", 1.0), chem("B", "C", 0.5, sign=-1, delay=1)]
+    mods = [modl("A", "C", 0.5), modl("A", "C", 0.25), modl("D", "B", 1.0), modl("C", "C", 0.5), modl("B", "D", 2.0)]
+    events = [stim("A", 0, 3), stim("D", 1, 2, 0.5)]
+    n = 8
+    series = {i: [0.0] for i in ids}
+    for t in range(n):
+        new = {}
+        for i in ids:
+            chem_all = 0.0
+            for e in edges:
+                if e["post"] == i:
+                    term = e["weight"] * hist(series[e["pre"]], t - e["delay"])
+                    chem_all += term if e["sign"] > 0 else -term
+            mod = sum(m["weight"] * series[m["pre"]][t] for m in mods if m["post"] == i)
+            new[i] = stim_at(events, i, t) + chem_all - 0.5 * mod
+        for i in ids:
+            series[i].append(new[i])
+    inp = sim_input(1.0, n, ids, edges, stimulus=events)
+    inp["graph"]["modulatory"] = mods
+    add_case(
+        "modulatory-sum",
+        "sum_in(v, mod) sums the unsigned, undelayed modulatory edges, separately from the chemical edges.",
+        "v(t+1) = u(t) + (signed chemical sum on tick-t history, B->C has delay 1) - 0.5 (sum of modulatory "
+        "weight * v_pre(t)). Modulatory edges carry no sign or delay, may repeat (A->C twice) and may be self-loops "
+        "(C->C); sum_in(v, all) never reads them. All numbers are dyadic, so the result is exact.",
+        [
+            *ASSIGN_PREAMBLE,
+            "input a = sum_in(v, all)",
+            "input m = sum_in(v, mod)",
+            "next v = euler_leak(v, u + a - 0.5 * m, tau)",
+            "observe identity_v1(v)",
+        ],
+        inp,
+        traces({"v": rows(series, ids)}, abs_tol=0),
+    )
+
+
+# ---------------------------------------------------------------------------------------------------------------
 
 
 def build_all():
@@ -1429,6 +1477,7 @@ def build_all():
     case_self_loop()
     case_no_edges()
     compile_error_cases()
+    case_modulatory_sum()
 
 
 def main():

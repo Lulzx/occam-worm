@@ -1,0 +1,66 @@
+{
+  "name": "modulatory-sum",
+  "description": "sum_in(v, mod) sums the unsigned, undelayed modulatory edges, separately from the chemical edges.",
+  "derivation": "v(t+1) = u(t) + (signed chemical sum on tick-t history, B->C has delay 1) - 0.5 (sum of modulatory weight * v_pre(t)). Modulatory edges carry no sign or delay, may repeat (A->C twice) and may be self-loops (C->C); sum_in(v, all) never reads them. All numbers are dyadic, so the result is exact.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "input a = sum_in(v, all)",
+      "input m = sum_in(v, mod)",
+      "next v = euler_leak(v, u + a - 0.5 * m, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 8,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"}
+      ],
+      "chemical": [
+        {"pre": "A", "post": "B", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "B", "post": "C", "weight": 0.5, "sign": -1, "delay": 1}
+      ],
+      "gap": [],
+      "modulatory": [
+        {"pre": "A", "post": "C", "weight": 0.5},
+        {"pre": "A", "post": "C", "weight": 0.25},
+        {"pre": "D", "post": "B", "weight": 1.0},
+        {"pre": "C", "post": "C", "weight": 0.5},
+        {"pre": "B", "post": "D", "weight": 2.0}
+      ]
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 3, "amplitude": 1.0},
+      {"neuron": "D", "start": 1, "end": 2, "amplitude": 0.5}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0, 0.0],
+          [1.0, 1.0, -0.375, 0.5],
+          [1.0, 0.75, -0.28125, -1.0],
+          [0.0, 1.5, -0.8046875, -0.75],
+          [0.0, 0.375, -0.173828125, -1.5],
+          [0.0, 0.75, -0.70654296875, -0.375],
+          [0.0, 0.1875, -0.0108642578125, -0.75],
+          [0.0, 0.375, -0.372283935546875, -0.1875]
+        ]
+      }
+    }
+  }
+}

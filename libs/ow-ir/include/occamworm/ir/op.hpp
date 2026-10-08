@@ -18,7 +18,7 @@ enum class Op {
     Stimulus,    // exogenous drive of this neuron at this tick
     TypeMask,    // attrs: type_name; 1 if the neuron has that type, else 0
     // Neighbourhood and history reads (reads of old state, §6.1).
-    SumIn,       // attrs: index (register), select; weighted chemical input sum
+    SumIn,       // attrs: index (register), select; weighted chemical (or modulatory) input sum
     CountIn,     // attrs: index (register), k; number of chemical inputs whose register value equals k
     Delay,       // attrs: index (register), k = ticks; own register k ticks ago
     // Arithmetic.
@@ -42,7 +42,7 @@ enum class Op {
     EulerLeak,       // explicit-Euler discretisation (stability bound checked at compile time)
 };
 
-enum class SumSelect { Exc, Inh, All };
+enum class SumSelect { Exc, Inh, All, Mod };
 
 enum class ObsOperator { IdentityV1, CalciumLinearV1 };
 

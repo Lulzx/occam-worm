@@ -128,6 +128,10 @@ def simulate(program: Program, sim_input: SimInput) -> SimResult:
             r = int(ins.attrs["register"])
             select = ins.attrs["select"]
             acc = 0.0
+            if select == "mod":
+                for e in range(graph.mod_offsets[i], graph.mod_offsets[i + 1]):
+                    acc += graph.mod_weight[e] * past(r, graph.mod_pre[e], 0, t)
+                return acc
             for e in range(graph.in_offsets[i], graph.in_offsets[i + 1]):
                 term = graph.weight[e] * past(r, graph.pre[e], graph.delay[e], t)
                 excitatory = graph.sign[e] > 0

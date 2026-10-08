@@ -42,10 +42,20 @@ class GapJunction:
 
 
 @dataclass(frozen=True)
+class ModulatoryEdge:
+    """Unsigned, undelayed extrasynaptic route ``pre -> post``; only ``sum_in(r, mod)`` reads it."""
+
+    pre: str
+    post: str
+    weight: float = 1.0
+
+
+@dataclass(frozen=True)
 class GraphSpec:
     neurons: tuple[tuple[str, str], ...]  # (id, type)
     chemical: tuple[ChemicalEdge, ...] = ()
     gap: tuple[GapJunction, ...] = ()
+    modulatory: tuple[ModulatoryEdge, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -73,7 +83,8 @@ class Graph:
     """Validated graph in CSR form, orientation version 1 (WRL_SYNTAX.md §6.2).
 
     Chemical edges are grouped by postsynaptic neuron (row ``i`` lists the inputs of neuron ``i``), sorted by
-    ``(pre, delay, sign, weight)``; gap junctions appear in both endpoint rows, sorted by ``(neighbour, g)``.
+    ``(pre, delay, sign, weight)``; gap junctions appear in both endpoint rows, sorted by ``(neighbour, g)``;
+    modulatory edges have their own CSR grouped by receiving neuron, sorted by ``(pre, weight)``.
     """
 
     ids: tuple[str, ...]
@@ -86,6 +97,9 @@ class Graph:
     gap_offsets: tuple[int, ...]
     gap_neighbor: tuple[int, ...]
     gap_conductance: tuple[float, ...]
+    mod_offsets: tuple[int, ...] = ()
+    mod_pre: tuple[int, ...] = ()
+    mod_weight: tuple[float, ...] = ()
 
     @property
     def n(self) -> int:
@@ -132,9 +146,13 @@ def graph_spec_from_json(data: Mapping[str, Any]) -> GraphSpec:
             for e in data.get("chemical", [])
         )
         gap = tuple(GapJunction(str(e["a"]), str(e["b"]), _num(e["g"], "g")) for e in data.get("gap", []))
+        modulatory = tuple(
+            ModulatoryEdge(str(e["pre"]), str(e["post"]), _num(e.get("weight", 1.0), "weight"))
+            for e in data.get("modulatory", [])
+        )
     except (KeyError, TypeError) as error:
         raise InputError(f"malformed graph description: {error!r}") from error
-    return GraphSpec(neurons, chemical, gap)
+    return GraphSpec(neurons, chemical, gap, modulatory)
 
 
 def delete_chemical(spec: GraphSpec, pre: str, post: str) -> GraphSpec:
@@ -204,6 +222,18 @@ def build_graph(spec: GraphSpec) -> Graph:
     for i in range(n):
         gap_offsets[i + 1] += gap_offsets[i]
 
+    mod: list[tuple[int, int, float]] = []  # post, pre, weight
+    for m in spec.modulatory:
+        if not math.isfinite(m.weight) or m.weight < 0.0:
+            raise InputError("modulatory weight must be finite and non-negative")
+        mod.append((lookup(m.post), lookup(m.pre), m.weight))
+    mod.sort()
+    mod_offsets = [0] * (n + 1)
+    for post, *_ in mod:
+        mod_offsets[post + 1] += 1
+    for i in range(n):
+        mod_offsets[i + 1] += mod_offsets[i]
+
     return Graph(
         ids=tuple(ids),
         types=tuple(types),
@@ -215,6 +245,9 @@ def build_graph(spec: GraphSpec) -> Graph:
         gap_offsets=tuple(gap_offsets),
         gap_neighbor=tuple(g[1] for g in gap),
         gap_conductance=tuple(g[2] for g in gap),
+        mod_offsets=tuple(mod_offsets),
+        mod_pre=tuple(m[1] for m in mod),
+        mod_weight=tuple(m[2] for m in mod),
     )
 
 
