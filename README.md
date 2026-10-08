@@ -2,13 +2,13 @@
 
 Searches a small typed language of local neural update rules, runs candidates on the *C. elegans* connectome, and keeps only rules that predict causal responses in animals they never saw. Brevity is a tie-breaker, never a substitute for held-out accuracy.
 
-**Status:** spec v0.4.1. Done (OW-001–005, OW-008–011, OW-013–016):
+**Status:** spec v0.4.1. Done (OW-001–005, OW-008–016):
 
 - data and audit: acquisition, trial import, M0 audit (**go**), animal-wise splits, annotation mapping
 - rule toolchain: the C++26 toolchain and interpreter, the Python scalar and JAX simulators
-- modelling: scoring, fitting, planning, equivalence, reports, embodiment
+- modelling: scoring, fitting, nested rule search, planning, equivalence, reports, embodiment
 
-In progress: the full baseline benchmark (OW-006/007) and nested rule search on atlas data (OW-012).
+In progress: the full baseline benchmark (OW-006/007). First search on atlas data: [SEARCH_DEMO.md](docs/evaluation/SEARCH_DEMO.md).
 
 ## Quickstart
 
