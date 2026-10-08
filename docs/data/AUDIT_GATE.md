@@ -24,3 +24,5 @@ Before developing any novel rule model, produce a machine-generated report with:
 **Go/no-go criterion:** at least one clearly specified collection of stimulus targets must admit genuine animal-held-out evaluation with nontrivial response variability. If not, the first paper becomes a dataset/identifiability audit rather than a misleading rule-discovery result.
 
 **Split selection:** choose the split scheme from the coverage tables alone, before any baseline or candidate is scored, and record the choice and rationale in the experiment registry. Prefer the scheme that keeps the most eligible targets present in held-out folds, subject to keeping all of an animal's sessions and trials in the same fold. Leave-one-animal-out is admissible for the outer loop when grouped k-fold leaves eligible targets without held-out coverage.
+
+> **Implemented (OW-003).** `python -m occamworm.analysis audit` produces every item above from the import; the generated report is [AUDIT_REPORT.md](AUDIT_REPORT.md). Thresholds are frozen in [`configs/datasets/eligibility.json`](../../configs/datasets/eligibility.json).

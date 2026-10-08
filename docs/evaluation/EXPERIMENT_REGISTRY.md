@@ -73,3 +73,23 @@ limitations:
 ```
 
 An experimental report must distinguish planned tests, completed tests, exploratory discoveries and retrospective hypotheses.
+
+## Registered entries
+
+### split-randi2023-wt-v1-loao (frozen 2026-10-08)
+
+```yaml
+entry: split-randi2023-wt-v1-loao
+kind: split_selection
+data_manifest: data/normalized/randi2023-wt-v1/manifest.json   # sha256 recorded in split.json
+split_manifest: data/splits/randi2023-wt-v1-loao/split.json
+evidence: artifacts/audit-v1/fold_coverage.parquet              # docs/data/AUDIT_REPORT.md
+candidates: [group5 (5x3), group10 (10x3), loao (113x5)]
+eligible_targets_covered: {group5: 125, group10: 127, loao: 144}
+chosen: loao
+rule: most eligible targets covered; ties broken by fewer outer folds (configs/datasets/eligibility.json)
+frozen_before_any_model_scored: true
+limitations:
+  - one recording per animal is assumed (animal = session)
+  - acquisition batch is not exported, so leave-batch-out is not possible
+```
