@@ -397,28 +397,29 @@ def source_digest(source: str) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
+def inspect_source(source: str, ow: Path | None = None) -> str:
+    """The IR JSON text printed by ``ow rule inspect`` for a WRL source; raises :class:`CompilerError`."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "program.wrl"
+        path.write_text(source)
+        proc = run_ow(["rule", "inspect", str(path)], ow)
+    if proc.returncode != 0:
+        _raise_compiler_error(proc.stderr)
+    return proc.stdout
+
+
 def compile_source(source: str, cache_dir: Path | None = None, ow: Path | None = None) -> Program:
     """Compile WRL source text through ``ow rule inspect``.
 
-    With ``cache_dir`` the IR is read from ``<cache_dir>/<sha256(source)>.json`` when the binary is absent, and
-    written there when the binary is present and the entry is missing.
+    With ``cache_dir`` the IR is read from ``<cache_dir>/<sha256(source)>.json`` when the binary is absent. The
+    binary, when present, is always used (the cache never overrides the compiler).
     """
     cached = None if cache_dir is None else cache_dir / f"{source_digest(source)}.json"
     binary = ow if ow is not None else find_ow(required=cached is None or not cached.is_file())
     if binary is None:
         assert cached is not None
         return load_ir(json.loads(cached.read_text()))
-    with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / "program.wrl"
-        path.write_text(source)
-        proc = run_ow(["rule", "inspect", str(path)], binary)
-    if proc.returncode != 0:
-        _raise_compiler_error(proc.stderr)
-    data = json.loads(proc.stdout)
-    if cached is not None and not cached.is_file():
-        cached.parent.mkdir(parents=True, exist_ok=True)
-        cached.write_text(proc.stdout)
-    return load_ir(data)
+    return load_ir(json.loads(inspect_source(source, binary)))
 
 
 def compile_file(path: Path | str, ow: Path | None = None) -> Program:

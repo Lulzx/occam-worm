@@ -1,0 +1,121 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "cd837971458b59b9d37c838757b25d1e4b1bdcaf2b684899fc45d3f5567584f5",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": null,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "h",
+      "unit": "1",
+      "init": 0
+    },
+    {
+      "index": 1,
+      "name": "s1",
+      "source_name": "v",
+      "unit": "1",
+      "init": 1
+    }
+  ],
+  "parameters": [
+    {
+      "index": 0,
+      "name": "p0",
+      "source_name": "tau_h",
+      "unit": "s",
+      "value": 0.3,
+      "lower": 0.3,
+      "upper": 0.3,
+      "trainable": false,
+      "bits": 0
+    }
+  ],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 0
+      },
+      "unit": "1"
+    },
+    {
+      "id": 1,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 1
+      },
+      "unit": "1"
+    },
+    {
+      "id": 2,
+      "op": "param",
+      "args": [],
+      "attrs": {
+        "param": 0
+      },
+      "unit": "s"
+    },
+    {
+      "id": 3,
+      "op": "leaky_integrate",
+      "args": [0, 1, 2],
+      "attrs": {},
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 3
+    },
+    {
+      "register": 1,
+      "value": 1
+    }
+  ],
+  "gap": null,
+  "observation": {
+    "operator": "identity_v1",
+    "register": 0,
+    "tau": null
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 83,
+    "l_ast": 83,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 0,
+    "components": {
+      "header": 6,
+      "registers": 21,
+      "parameters": 17,
+      "instructions": 32,
+      "writes": 4,
+      "gap": 1,
+      "observation": 2
+    },
+    "instruction_bits_by_op": {
+      "leaky_integrate": 15,
+      "param": 4,
+      "state": 8
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G1\nstimulus_unit 1\nstate s0 : 1 = 0e0\nstate s1 : 1 = 1e0\nparam p0 : s = 3e-1 fixed\nlet n0 = state(s0)\nlet n1 = state(s1)\nlet n2 = param(p0)\nlet n3 = leaky_integrate(n0, n1, n2)\nnext s0 = n3\nnext s1 = n1\nobserve identity_v1(s0)\n"
+}

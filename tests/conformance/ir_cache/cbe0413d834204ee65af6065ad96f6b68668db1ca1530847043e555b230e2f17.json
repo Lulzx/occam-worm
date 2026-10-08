@@ -1,0 +1,71 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "866246aef79f521e44ad9de79a8244bc0ed2d3c37a515c07e2b39d732d0eeade",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": null,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "x",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "stimulus",
+      "args": [],
+      "attrs": {},
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 0
+    }
+  ],
+  "gap": null,
+  "observation": {
+    "operator": "calcium_linear_v1",
+    "register": 0,
+    "tau": {
+      "const": 0.5
+    }
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 42,
+    "l_ast": 42,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 0,
+    "components": {
+      "header": 6,
+      "registers": 10,
+      "parameters": 1,
+      "instructions": 11,
+      "writes": 1,
+      "gap": 1,
+      "observation": 12
+    },
+    "instruction_bits_by_op": {
+      "stimulus": 8
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G1\nstimulus_unit 1\nstate s0 : 1 = 0e0\nlet n0 = stimulus()\nnext s0 = n0\nobserve calcium_linear_v1(s0, 5e-1[s])\n"
+}
