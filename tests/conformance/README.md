@@ -4,9 +4,11 @@
 
 Tickets: [OW-009](../../docs/planning/tickets/OW-009.md) · Spec: [§6.8](../../docs/runtime/SIM_SEMANTICS.md) · Case format and semantics: [WRL_SYNTAX.md](../../docs/language/WRL_SYNTAX.md) §6–§7
 
-Status: 52 cases; the C++ reference interpreter passes all of them. The Python simulators are pending.
+Status: 52 cases; the C++ reference interpreter, the scalar Python interpreter and the JAX simulator pass all of them (`pytest tests/conformance`; see [OW-009](../../docs/planning/tickets/OW-009.md)).
 
 Each `NN-name.json` is self-contained (inline WRL source, graph, stimulus, parameters, `dt`, steps, sampled expected traces, tolerance, and a `derivation` field). Expected values are analytic solutions, exact rational arithmetic on the documented formulas, or hand-derivable dyadic arithmetic; none come from the interpreter. `gen_cases.py` regenerates every file deterministically (`python3 tests/conformance/gen_cases.py`). Run the suite with `ow sim conformance --suite tests/conformance` (also CTest `conformance_suite`).
+
+`test_python_conformance.py` runs every case through `occamworm.sim.reference` and `occamworm.sim.jaxsim` against the expected values, checks both against `ow sim run` (max deviation 0 and 4.4e-16) and JAX against the scalar interpreter (limit 1e-12), and asserts that `ow` rejects the compile-error cases. Programs come from `ow rule inspect` (`$OW_CLI`, else `build/clang/libs/ow-cli/ow`) or, when the binary is absent, from `ir_cache/` (refresh with `OW_UPDATE_IR_CACHE=1 pytest tests/conformance`).
 
 | Cases | Covers |
 |---|---|
