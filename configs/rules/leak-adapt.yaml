@@ -1,0 +1,23 @@
+# Illustrative WRL program from spec §5.5: not a working parser input nor a calibrated
+# biophysical equation. The compiler must reject this explicit-Euler update when dt/tau exceeds
+# its declared stability bound. chemical_exc/chemical_inh need priors or latent sign inference.
+wrl_version: "0.1"
+rule_id: leak_exc_inh_adapt_v1
+neuron_state:
+  v: {unit: dimensionless, init: 0.0}
+  h: {unit: dimensionless, init: 0.0}
+inputs:
+  stimulus: {unit: dimensionless}
+  chemical_exc: {op: sum_in, edge: chemical_exc, signal: v_delayed}
+  chemical_inh: {op: sum_in, edge: chemical_inh, signal: v_delayed}
+parameters:
+  tau_v: {unit: s, value: 0.25, trainable: true, lower: 0.005, upper: 10.0}
+  tau_h: {unit: s, value: 2.0, trainable: true, lower: 0.01, upper: 30.0}
+  gain: {unit: dimensionless, value: 1.0, trainable: true, lower: 0.0, upper: 20.0}
+  adapt: {unit: dimensionless, value: 0.2, trainable: true, lower: 0.0, upper: 10.0}
+update:
+  drive: "gain * (chemical_exc - chemical_inh + stimulus) - adapt * h"
+  v_next: "v + dt/tau_v * (-v + tanh(drive))"
+  h_next: "h + dt/tau_h * (-h + max(v, 0))"
+observation:
+  operator: calcium_linear_v1

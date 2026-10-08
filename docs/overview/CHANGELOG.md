@@ -1,0 +1,26 @@
+# Specification changelog
+
+> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: "Changes in" sections
+
+## Changes in 0.4.0
+
+1. **Name.** The project is renamed **Occam's Worm** (`occamworm`). The name states its central selection principle: compact programs are preferred, but only among those that survive held-out interventional tests. C++ libraries use the `ow-` prefix, the C++ namespace is `occamworm`, and implementation tickets are numbered OW-001 onward. The rule language keeps its name, WRL (Worm Rule Language).
+2. **C++ replaces Rust** for the rule-language toolchain, program enumeration, the deterministic reference interpreter, the CLI and any later optimized runtime. The Python side (data import, baselines, differentiable simulator and fitting) is unchanged. New material: C++ toolchain and conventions ([§14.8](../engineering/REPRODUCIBILITY.md)), C++-specific determinism rules ([§6.6](../runtime/SIM_SEMANTICS.md)), C++ interfaces ([§14.5](../engineering/ARCHITECTURE.md)), sanitizer, fuzzing and two-compiler CI ([§16.5](../evaluation/TESTING.md)), metal-cpp for the optional Metal backend ([§18.3](../engineering/PERFORMANCE.md)), template-specialized kernels ([§18.2](../engineering/PERFORMANCE.md)), and a memory-safety entry in the risk table ([§19](../planning/RISKS.md)).
+
+## Changes in 0.3.0
+
+The conceptual framing is now self-contained. The design principles ([§1.2](SCOPE_AND_HYPOTHESES.md)), the hypothesis graph ([§8](../science/EXPERIMENT_DESIGN.md)), observer-relative equivalence ([§9](../science/EQUIVALENCE.md)) and the predictive-shortcut tests ([§10](../science/PREDICTIVE_SHORTCUTS.md)) are stated in their own terms rather than by reference to an external body of theory, and the corresponding background references are removed. No methods, gates, metrics or claims changed.
+
+## Changes in 0.2.0
+
+This revision responds to a design review of 0.1.0. The substantive changes are:
+
+1. **Indicator-kinetics confound (H1, Paper A).** Shared response kernels can come from the measurement rather than the neurons: directly through a shared indicator filter when models are driven by the nominal stimulus, and indirectly through limited resolvable bandwidth when models are conditioned on the measured autoresponse. Indicator kinetics are now modeled as a separate stage, and a preregistered indicator-kinetics control is required before any claim about shared neural timescales ([§1.5](SCOPE_AND_HYPOTHESES.md), [§3.4](../science/PROBLEM_STATEMENT.md), [§4.5](../science/BASELINES.md), [§11.6](../evaluation/VALIDATION_PLAN.md), [§11.7](../evaluation/VALIDATION_PLAN.md), [§16.3](../evaluation/TESTING.md), [§20.1](../publication/PUBLICATION_PLAN.md)).
+2. **Within-recording stimulation history.** Sequential stimulations within one recording are not independent exposures. Stimulation order and recent history are now recorded, audited and modeled as a covariate or carried-forward state ([§2.3](../data/AUDIT_GATE.md), [§2.4](../data/DATA_CONTRACT.md), [§3.1](../science/PROBLEM_STATEMENT.md), [§4.1](../science/BASELINES.md), [§6.7](../runtime/SIM_SEMANTICS.md), [§14.4](../data/DATA_CONTRACT.md), [§16.3](../evaluation/TESTING.md)).
+3. **Autoresponse conditioning.** T2 is split into T2a (conditioned on the stimulated neuron's measured autoresponse) and T2b (nominal stimulus only). Both are reported; T2a is primary for questions about signal propagation ([§3.6](../science/PROBLEM_STATEMENT.md), [§4.1](../science/BASELINES.md), [§4.3](../science/BASELINES.md), [§11.6](../evaluation/VALIDATION_PLAN.md), [§14.6](../evaluation/EXPERIMENT_REGISTRY.md)).
+4. **Fold feasibility.** M0 now produces target-by-fold coverage tables for several split schemes, including leave-one-animal-out, and the scheme is frozen from coverage alone, before any model is scored ([§2.3](../data/AUDIT_GATE.md), [§4.2](../science/BASELINES.md), [§11.1](../evaluation/VALIDATION_PLAN.md), OW-004).
+5. **Implementation split.** The differentiable simulator and parameter fitting are built in Python (JAX or PyTorch). Rust holds the rule-language toolchain, enumeration and the reference interpreter. The forward pass moves to Rust only if profiling justifies it ([§6.8](../runtime/SIM_SEMANTICS.md), [§7.6](../inference/SEARCH_AND_INFERENCE.md), [§14.1](../engineering/ARCHITECTURE.md), [§14.2](../engineering/ARCHITECTURE.md), [§18.1](../engineering/PERFORMANCE.md), OW-009, OW-011).
+6. **Complexity accounting.** Structural and parameter description lengths are defined once (`L_struct`, `L_params`, `L_total`) and used consistently, removing a double penalty on parameters ([§3.5](../science/PROBLEM_STATEMENT.md), [§5.7](../language/GRAMMAR.md), [§7.7](../inference/SEARCH_AND_INFERENCE.md), [§7.9](../inference/SEARCH_AND_INFERENCE.md)).
+7. **Schedule.** Milestone windows M0–M5 are widened, M2 most of all ([§15](../planning/ROADMAP.md)).
+8. **Publication framing.** Papers are written in plain methodological terms, with project-specific terms used only alongside their operational definitions ([§20.0](../publication/PUBLICATION_PLAN.md)).
+9. **Minor.** Terminology fix in [Appendix A](GLOSSARY.md); citation verification is an explicit pre-release task ([§22](REFERENCES.md)); new open decisions in [Appendix B](../planning/OPEN_DECISIONS.md).

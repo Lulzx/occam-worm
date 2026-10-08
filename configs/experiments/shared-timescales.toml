@@ -1,0 +1,43 @@
+# Illustrative configuration from spec §14.6. Not read by any tool yet.
+# Fold counts are provisional: the split scheme is frozen from the M0 coverage tables (§2.3).
+
+[experiment]
+name = "shared-timescales-wt-v1"
+question = "Do shared response timescales generalize across animals?"
+primary_condition = "wild-type"
+primary_metric = "animal_paired_predictive_nll_difference"
+primary_task = "T2a_autoresponse_conditioned"
+secondary_tasks = ["T2b_nominal_stimulus"]
+
+[data]
+manifest = "configs/datasets/primary.toml"
+use_individual_trials = true
+include_valid_near_null_responses = true
+calibration_policy = "pre_stimulus_only"
+history_term = "frozen_from_training_audit"
+initial_state_policy = "history_conditioned"   # default unless the M0 audit finds no carryover (§6.7)
+
+[splits]
+unit = "animal_id"
+outer = "group_kfold"            # provisional; frozen from M0 coverage tables
+outer_folds = 5
+inner = "group_kfold"
+inner_folds = 3
+seed = 20261008
+scheme_justification = "artifacts/audit-v1/fold_coverage.parquet"
+
+[models]
+names = ["null", "shared_kernel", "low_rank_kernels", "independent_kernels", "linear_network"]
+
+[observation]
+family = "student_t_correlated"
+fit_noise_on = "training_only"
+allow_test_specific_scale_calibration = false
+indicator_stage = "separate_fitted"
+indicator_control = true
+
+[report]
+bootstrap_unit = "animal"
+bootstrap_replicates = 2000
+confidence_level = 0.95
+report_all_stim_targets = true

@@ -1,0 +1,35 @@
+# Data: raw downloads are immutable and never committed; normalized tables and splits are local.
+/data/raw/*
+/data/normalized/*
+/data/splits/*
+!/data/**/README.md
+
+# Generated run outputs (content-addressed; published separately)
+/artifacts/*
+!/artifacts/README.md
+
+# C++ build
+/build/
+/out/
+/vcpkg_installed/
+compile_commands.json
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+dist/
+_skbuild/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
