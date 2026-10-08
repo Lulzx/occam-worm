@@ -147,6 +147,10 @@ def render(r: dict[str, Any], target_rows: list[dict[str, Any]]) -> str:
     ix = r["id_intersection"]
     if ix["status"] == "computed":
         lines.append(
+            f"- Atlas name labels {ix['atlas_labels']} resolved by the OW-013 alias audit: "
+            f"{_kv(ix['atlas_label_resolution'])}. Only exact and unambiguous-alias resolutions count below."
+        )
+        lines.append(
             f"- Atlas {ix['atlas_ids']}, anatomy {ix['anatomy_ids']}, molecular {ix['molecular_ids']}; "
             f"atlas∩anatomy {ix['atlas_and_anatomy']}, atlas∩molecular {ix['atlas_and_molecular']}, "
             f"all three {ix['all_three']}."

@@ -452,36 +452,34 @@ def _json_default(x: Any) -> Any:
 
 
 def _id_intersection(root: Path, atlas_ids: set[str]) -> dict[str, Any]:
+    """Atlas labels resolved through the OW-013 alias audit, against anatomy and molecular annotations."""
     ann = root / "data" / "normalized" / "annotations-v1"
-    if not (ann / "edges.parquet").exists() or not (ann / "neurons.parquet").exists():
+    needed = ("edges.parquet", "neurons.parquet", "unresolved.parquet")
+    if not all((ann / f).exists() for f in needed):
         return {"status": "pending OW-013", "atlas_ids": len(atlas_ids)}
     edges = pq.read_table(ann / "edges.parquet", columns=["source_neuron_id", "target_neuron_id", "edge_kind"])
-    kind = edges.column("edge_kind").to_pylist()
-    anat = {x for x, k in zip(edges.column("source_neuron_id").to_pylist(), kind, strict=True) if k in ("chem", "gap")}
-    anat |= {x for x, k in zip(edges.column("target_neuron_id").to_pylist(), kind, strict=True) if k in ("chem", "gap")}
-    neurons = pq.read_table(ann / "neurons.parquet")
-    mol_cols = [c for c in neurons.column_names if "transmitter" in c or "receptor" in c or "neuropeptide" in c]
-    ids = neurons.column("neuron_id").to_pylist()
-    molecular: set[str] = set()
-    for col in mol_cols:
-        for nid, v in zip(ids, neurons.column(col).to_pylist(), strict=True):
-            if v not in (None, "", []):
-                molecular.add(nid)
-    aliases = ann / "aliases.parquet"
-    alias_map: dict[str, str] = {}
-    if aliases.exists():
-        at = pq.read_table(aliases)
-        cols = at.column_names
-        src = "alias" if "alias" in cols else cols[0]
-        dst = "neuron_id" if "neuron_id" in cols else ("canonical_id" if "canonical_id" in cols else cols[1])
-        alias_map = dict(zip(at.column(src).to_pylist(), at.column(dst).to_pylist(), strict=True))
-    atlas = {alias_map.get(x, x) for x in atlas_ids}
+    kind = np.asarray(edges.column("edge_kind").to_pylist(), dtype=object)
+    syn = (kind == "chem") | (kind == "gap")
+    anat = {str(x) for x in np.asarray(edges.column("source_neuron_id").to_pylist(), dtype=object)[syn]}
+    anat |= {str(x) for x in np.asarray(edges.column("target_neuron_id").to_pylist(), dtype=object)[syn]}
+    neurons = pq.read_table(ann / "neurons.parquet", columns=["neuron_id", "has_transmitter_assignment"]).to_pylist()
+    molecular = {str(r["neuron_id"]) for r in neurons if r["has_transmitter_assignment"]}
+    audit = pq.read_table(ann / "unresolved.parquet", columns=["label", "resolved", "resolution", "neuron_id"])
+    resolution: dict[str, Any] = {}
+    atlas: set[str] = set()
+    for r in audit.to_pylist():
+        if r["label"] in atlas_ids:
+            resolution[r["resolution"]] = resolution.get(r["resolution"], 0) + 1
+            if r["resolved"] and r["neuron_id"]:
+                atlas.add(str(r["neuron_id"]))
     return {
         "status": "computed",
+        "atlas_labels": len(atlas_ids),
+        "atlas_label_resolution": dict(sorted(resolution.items())),
         "atlas_ids": len(atlas),
         "anatomy_ids": len(anat),
         "molecular_ids": len(molecular),
-        "molecular_columns": mol_cols,
+        "molecular_definition": "neurons with a neurotransmitter assignment (OW-013 neurons.parquet)",
         "atlas_and_anatomy": len(atlas & anat),
         "atlas_and_molecular": len(atlas & molecular),
         "all_three": len(atlas & anat & molecular),
