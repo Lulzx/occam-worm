@@ -102,3 +102,15 @@ std::string show(const T& value) {
             ::occamworm::test::report_failure(__FILE__, __LINE__, "no error thrown by " #expression);   \
         }                                                                                               \
     } while (false)
+
+// Checks that evaluating `expression` does not throw occamworm::Error.
+#define OW_CHECK_NOTHROW(expression)                                                                    \
+    do {                                                                                                \
+        try {                                                                                           \
+            (void)(expression);                                                                         \
+        } catch (const ::occamworm::Error& ow_error) {                                                  \
+            ::occamworm::test::report_failure(__FILE__, __LINE__,                                       \
+                                              std::string("unexpected error from " #expression ": ") + \
+                                                  ow_error.what());                                     \
+        }                                                                                               \
+    } while (false)

@@ -8,13 +8,15 @@ int main() {
     int unexpected = 0;
     for (const TestCase& test_case : registry()) {
         const int before = failure_count();
+        const int unexpected_before = unexpected;
         try {
             test_case.function();
         } catch (const std::exception& error) {
             ++unexpected;
             std::cerr << test_case.name << ": unexpected exception: " << error.what() << "\n";
         }
-        std::cout << (failure_count() == before ? "[ ok ] " : "[FAIL] ") << test_case.name << "\n";
+        const bool passed = failure_count() == before && unexpected == unexpected_before;
+        std::cout << (passed ? "[ ok ] " : "[FAIL] ") << test_case.name << "\n";
     }
     std::cout << registry().size() << " tests, " << failure_count() << " failed checks, " << unexpected
               << " unexpected exceptions\n";

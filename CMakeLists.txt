@@ -33,6 +33,7 @@ configure_file(libs/ow-core/build_info.hpp.in ${CMAKE_BINARY_DIR}/generated/occa
 include(CTest)
 
 add_subdirectory(libs/ow-core)
+add_subdirectory(libs/ow-ir)
 
 if(BUILD_TESTING)
   add_subdirectory(tests/cpp)

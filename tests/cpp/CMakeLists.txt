@@ -12,3 +12,4 @@ endfunction()
 
 add_ow_test(test_sha256 ow_core)
 add_ow_test(test_core ow_core)
+add_ow_test(test_ir ow_ir)
