@@ -90,6 +90,45 @@ def block_nll(resid: FloatArray, valid: BoolArray, sigma: FloatArray, phi: float
     return total
 
 
+Flat = tuple[FloatArray, FloatArray, FloatArray, BoolArray, npt.NDArray[np.int64]]
+
+
+def _flatten(resid: FloatArray, valid: BoolArray) -> Flat:
+    """Observed samples as flat arrays: value, previous observed value, gap, is-first flag, trace index."""
+    prev = _previous_valid(valid)
+    rows, cols = np.nonzero(valid)
+    p = prev[rows, cols]
+    first = p < 0
+    e = resid[rows, cols].astype(np.float64)
+    e_prev = np.where(first, 0.0, resid[rows, np.maximum(p, 0)]).astype(np.float64)
+    gap = np.where(first, 1, cols - p).astype(np.float64)
+    return e, e_prev, gap, first, rows
+
+
+def noise_objective(
+    x: FloatArray, flat: Flat, s: FloatArray, scale: float
+) -> tuple[float, FloatArray]:
+    """Mean NLL per observed sample and its gradient in ``x = (log a, log(b/scale), atanh phi)``."""
+    e, e_prev, gap, first, rows = flat
+    a, b, phi = float(np.exp(x[0])), float(np.exp(x[1]) * scale), float(np.tanh(x[2]))
+    sn2 = s[rows] ** 2
+    s2 = a**2 * sn2 + b**2
+    rho = np.where(first, 0.0, np.power(phi, gap))
+    one_m = np.maximum(1.0 - rho**2, 1e-12)
+    v = s2 * one_m
+    r = e - rho * e_prev
+    n = max(e.size, 1)
+    f = 0.5 * (LOG_2PI + np.log(v) + r**2 / v)
+    df_dv = 0.5 * (1.0 / v - r**2 / v**2)
+    df_ds2 = df_dv * one_m
+    df_drho = df_dv * (-2.0 * s2 * rho) + (r / v) * (-e_prev)
+    drho_dphi = np.where(first, 0.0, gap * np.power(phi, np.maximum(gap - 1.0, 0.0)))
+    g0 = float(np.sum(df_ds2 * 2.0 * a**2 * sn2))
+    g1 = float(np.sum(df_ds2 * 2.0 * b**2))
+    g2 = float(np.sum(df_drho * drho_dphi)) * (1.0 - phi**2)
+    return float(f.sum()) / n, np.array([g0, g1, g2]) / n
+
+
 def fit_noise(resid: FloatArray, valid: BoolArray, s: FloatArray, max_traces: int = 50_000) -> NoiseModel:
     """Maximum-likelihood ``(a, b, phi)`` on training residuals. Uses a deterministic subsample when large."""
     n = resid.shape[0]
@@ -99,22 +138,16 @@ def fit_noise(resid: FloatArray, valid: BoolArray, s: FloatArray, max_traces: in
     s = np.nan_to_num(np.asarray(s, dtype=np.float64), nan=0.0)
     ev = np.where(valid, resid, np.nan)
     scale = float(np.sqrt(np.nanmean(ev**2))) if valid.any() else 1.0
-
-    def unpack(x: FloatArray) -> NoiseModel:
-        return NoiseModel(a=float(np.exp(x[0])), b=float(np.exp(x[1]) * scale), phi=float(np.tanh(x[2])))
-
-    def objective(x: FloatArray) -> float:
-        m = unpack(x)
-        return float(ar1_nll(resid, valid, m.sigma(s), m.phi).sum() / max(valid.sum(), 1))
-
+    flat = _flatten(resid, valid)
     best = None
     for x0 in ([0.0, np.log(0.5), 0.5], [np.log(0.5), np.log(0.1), 1.0]):
-        res = optimize.minimize(objective, np.asarray(x0, dtype=np.float64), method="L-BFGS-B",
-                                options={"ftol": 1e-12, "gtol": 1e-8, "maxiter": 500})
+        res = optimize.minimize(noise_objective, np.asarray(x0, dtype=np.float64), args=(flat, s, scale), jac=True,
+                                method="L-BFGS-B", options={"ftol": 1e-13, "gtol": 1e-9, "maxiter": 500})
         if best is None or res.fun < best.fun:
             best = res
     assert best is not None
-    return unpack(best.x)
+    x = best.x
+    return NoiseModel(a=float(np.exp(x[0])), b=float(np.exp(x[1]) * scale), phi=float(np.tanh(x[2])))
 
 
 def interval_coverage(

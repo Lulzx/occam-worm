@@ -114,3 +114,22 @@ def test_paired_difference_resamples_animals() -> None:
     assert r["n_animals"] == 30
     with pytest.raises(ValueError):
         paired_difference(base, {"a0": 1.0})
+
+
+def test_noise_objective_matches_ar1_nll_and_its_gradient() -> None:
+    from occamworm.analysis.scoring import _flatten, noise_objective
+
+    rng = np.random.default_rng(4)
+    e = rng.standard_normal((30, 20)) * 0.1
+    valid = rng.random((30, 20)) < 0.7
+    s = rng.uniform(0.01, 0.1, 30)
+    x = np.array([0.3, -1.0, 0.4])
+    flat = _flatten(e, valid)
+    f, g = noise_objective(x, flat, s, 0.1)
+    m = NoiseModel(float(np.exp(x[0])), float(np.exp(x[1]) * 0.1), float(np.tanh(x[2])))
+    assert f == pytest.approx(ar1_nll(e, valid, m.sigma(s), m.phi).sum() / valid.sum(), rel=1e-12)
+    for k in range(3):
+        d = np.zeros(3)
+        d[k] = 1e-6
+        num = (noise_objective(x + d, flat, s, 0.1)[0] - noise_objective(x - d, flat, s, 0.1)[0]) / 2e-6
+        assert g[k] == pytest.approx(num, rel=1e-5, abs=1e-9)
