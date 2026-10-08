@@ -22,4 +22,4 @@ pytest
 
 Spec: [§14.2](../docs/engineering/ARCHITECTURE.md)
 
-Status: `sources` implemented; other subpackages not started.
+Status: `sources` and the Randi 2023 importer implemented; other subpackages not started.

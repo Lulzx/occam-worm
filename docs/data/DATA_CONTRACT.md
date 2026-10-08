@@ -116,3 +116,5 @@ provenance_reference: string
 ```
 
 In deployed schemas, use actual hashes and meaningful versioned enums; the example placeholders above are deliberately not measured results.
+
+> **Implemented (OW-002).** `data/normalized/randi2023-wt-v1/` follows these tables with one deviation: observations are stored once per recording rather than per trial, because consecutive trial windows overlap; the stimulated neuron's trace is materialized separately in `autoresponses.parquet`. Extra columns (trace source, target codes, raw optogenetics fields, QC flags) are listed in [RANDI2023_IMPORT.md](RANDI2023_IMPORT.md#output-tables).
