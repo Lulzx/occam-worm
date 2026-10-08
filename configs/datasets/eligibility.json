@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1.0",
+  "description": "M0 audit thresholds (§2.3, §4.2). Frozen before any model is scored; changing them requires a new audit version.",
+  "response_offsets": [1, 30],
+  "min_response_valid_fraction": 0.5,
+  "autoresponse_min_valid_fraction": 0.8,
+  "autoresponse_min_peak_over_noise": 3.0,
+  "responder_min_animals": 2,
+  "target_min_animals": 3,
+  "target_min_responders": 2,
+  "responsive_pair_min_abs_t": 3.0,
+  "split_seed": 20261008,
+  "candidate_schemes": [
+    {"name": "group5", "outer": "group_kfold", "outer_folds": 5, "inner_folds": 3},
+    {"name": "group10", "outer": "group_kfold", "outer_folds": 10, "inner_folds": 3},
+    {"name": "loao", "outer": "leave_one_animal_out", "outer_folds": null, "inner_folds": 5}
+  ],
+  "scheme_selection_rule": "most eligible targets covered (tested in an outer fold and fit+validated in at least one inner fold of every outer fold that tests it); ties broken by fewer outer folds",
+  "bootstrap_replicates": 2000,
+  "bootstrap_seed": 20261008
+}
