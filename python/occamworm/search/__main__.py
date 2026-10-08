@@ -81,14 +81,75 @@ def run(root: Path, cfg_path: Path, out: Path) -> Path:
     return log
 
 
+def summarize(out: Path) -> str:
+    """Markdown summary of a search run: volume, per-fold winners, Pareto fronts and budget curves."""
+    from occamworm.search.locked import read_selection
+
+    run = json.loads((out / "run.json").read_text())
+    volume = json.loads((out / "search_volume.json").read_text())
+    rows = [json.loads(line) for line in (out / "folds.jsonl").read_text().splitlines() if line.strip()]
+    lines = [
+        f"# Nested search: {out.name}",
+        "",
+        f"Run `{run['run_id'][:12]}`, code `{run['inputs']['code']['commit'][:12]}`, "
+        f"split `{run['inputs']['split_sha256'][:12]}`.",
+        "",
+        f"Search volume: {volume['enumerated']} programs enumerated, gated {volume['gated']}, "
+        f"{volume['kept']} kept; {volume['offered']} candidates offered per fold "
+        "(kernel baselines, hand-written rules and the head of the enumeration).",
+        "",
+        "| fold | winner | outer NLL | Pareto front (L_total ascending) | rejected |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for r in rows:
+        rej = len(r["search_log"].get("candidates_rejected", {}))
+        lines.append(
+            f"| {r['fold']} | `{r['winner']}` | {r['outer_nll']:,.1f} | {', '.join(f'`{k}`' for k in r['pareto'])} "
+            f"| {rej} |"
+        )
+    for r in rows:
+        sel = read_selection(out / f"fold{r['fold']:03d}" / "selection.json")
+        lines += [
+            "",
+            f"## Fold {r['fold']}",
+            "",
+            "| candidate | inner NLL | L_total (bits) |",
+            "| --- | --- | --- |",
+        ]
+        lines += [f"| `{x['key']}` | {x['inner_nll']:,.1f} | {x['l_total_bits']:,.0f} |" for x in sel["ranking"]]
+        bc = r["budget_curve"]
+        lines += [
+            "",
+            "Budget curve (best inner NLL after k candidates, in offer order vs the mean of random orders):",
+            "",
+            "| k | enumeration | random mean | random SD |",
+            "| --- | --- | --- | --- |",
+        ]
+        lines += [
+            f"| {k} | {e:,.1f} | {m:,.1f} | {sd:,.1f} |"
+            for k, e, m, sd in zip(bc["k"], bc["enumeration"], bc["random_mean"], bc["random_sd"], strict=True)
+        ]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m occamworm.search")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="nested search on the frozen split, outer folds scored once")
     r.add_argument("--config", type=Path, required=True)
     r.add_argument("--out", type=Path, help="default: artifacts/search-<config name>")
+    m = sub.add_parser("summarize", help="Markdown summary of a finished search run")
+    m.add_argument("--out", type=Path, required=True, help="the run directory")
+    m.add_argument("--publish", type=Path, help="also write the summary here (e.g. docs/evaluation/...)")
     args = ap.parse_args(argv)
     root = find_root(Path.cwd())
+    if args.cmd == "summarize":
+        text = summarize(args.out)
+        (args.out / "summary.md").write_text(text)
+        if args.publish:
+            args.publish.write_text(text)
+        print(args.out / "summary.md")
+        return 0
     cfg_path = args.config.resolve()
     out = args.out or root / "artifacts" / f"search-{json.loads(cfg_path.read_text())['name']}"
     print(run(root, cfg_path, out))
