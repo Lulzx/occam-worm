@@ -1,0 +1,57 @@
+{
+  "name": "param-override",
+  "description": "A trainable parameter overridden by the simulation input and one left at the default (lo + hi) / 2.",
+  "derivation": "tau is overridden to 0.6 (the program default is 0.2); gain has no declared value so it is (0 + 4)/2 = 2. Constant stimulus 1 gives v_n = 2 (1 - exp(-n dt / 0.6)).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "param tau : s = 0.2 in [0.05, 1] trainable bits 8",
+      "param gain : 1 in [0, 4] trainable bits 6",
+      "next v = leaky_integrate(v, gain * stimulus, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 15,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 15, "amplitude": 1.0}
+    ],
+    "params": {"tau": 0.6}
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0],
+          [0.30703655021877196],
+          [0.5669373788524215],
+          [0.7869386805747334],
+          [0.973165761934816],
+          [1.1308035829858436],
+          [1.2642411176571156],
+          [1.3771935521708047],
+          [1.4728057237685466],
+          [1.5537396797031404],
+          [1.6222487943248765],
+          [1.6802405078406122],
+          [1.7293294335267748],
+          [1.7708823120146246],
+          [1.8060560642711898],
+          [1.8358300027522023]
+        ]
+      }
+    }
+  }
+}

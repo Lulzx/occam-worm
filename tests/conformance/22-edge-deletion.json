@@ -1,0 +1,65 @@
+{
+  "name": "edge-deletion",
+  "description": "The graph of chemical-excitation with edits.delete_chemical removing A->B.",
+  "derivation": "Without the A->B edge, B receives nothing and so neither does C: both stay 0. D(t+1) = 2 A(t) is untouched: D = 0,0,2,2,0,...",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "input e = sum_in(v, exc)",
+      "next v = euler_leak(v, u + e, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 7,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"}
+      ],
+      "chemical": [
+        {"pre": "A", "post": "B", "weight": 0.5, "sign": 1, "delay": 0},
+        {"pre": "B", "post": "C", "weight": 2.0, "sign": 1, "delay": 0},
+        {"pre": "A", "post": "D", "weight": 2.0, "sign": 1, "delay": 0}
+      ],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 2, "amplitude": 1.0}
+    ],
+    "edits": {
+      "delete_chemical": [
+        [
+          "A",
+          "B"
+        ]
+      ]
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0, 2.0],
+          [0.0, 0.0, 0.0, 2.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "g0-count-delay",
+  "description": "count_in reads delayed history of any sign and weight; B starts live so the initial state is read for t < 0.",
+  "derivation": "next s = lut(count_in(s,1) + u, [0,1]) (clamped index, so any positive count gives 1). B(t+1) = [A(t-2) == 1]; C(t+1) = [[A(t)==1] + [B(t-1)==1] + u >= 1]. B = 1 initially, so C(1) = 1 via B(-1) = B(0) = 1. Weights and the inhibitory sign do not affect count_in.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "next s = lut(add(count_in(s, 1), stimulus), [0, 1])",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 12,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [
+        {"pre": "A", "post": "B", "weight": 1.0, "sign": 1, "delay": 2},
+        {"pre": "A", "post": "C", "weight": 0.5, "sign": 1, "delay": 0},
+        {"pre": "B", "post": "C", "weight": 3.0, "sign": -1, "delay": 1}
+      ],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 1, "amplitude": 1.0},
+      {"neuron": "A", "start": 4, "end": 5, "amplitude": 1.0}
+    ],
+    "initial_state": {
+      "s": {"B": 1}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "s": [
+          [0.0, 1.0, 0.0],
+          [1.0, 0.0, 1.0],
+          [0.0, 0.0, 1.0],
+          [0.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0],
+          [0.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0],
+          [0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

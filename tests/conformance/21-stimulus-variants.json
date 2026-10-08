@@ -1,0 +1,61 @@
+{
+  "name": "stimulus-variants",
+  "description": "Constant, overlapping (accumulating), impulse and negative stimulus events on a 3-neuron chain.",
+  "derivation": "A: u = 1,1,1.5,1.5,.5,.5,0 (events [0,4) amp 1 and [2,6) amp .5 add); B: impulse 2 at tick 3; C: -1 on [5,8). With dt = tau = 1: A(t+1) = u_A(t), B(t+1) = u_B(t) + A(t), C(t+1) = u_C(t) + B(t).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "input e = sum_in(v, exc)",
+      "next v = euler_leak(v, u + e, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 10,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [
+        {"pre": "A", "post": "B", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "B", "post": "C", "weight": 1.0, "sign": 1, "delay": 0}
+      ],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 4, "amplitude": 1.0},
+      {"neuron": "A", "start": 2, "end": 6, "amplitude": 0.5},
+      {"neuron": "B", "start": 3, "end": 4, "amplitude": 2.0},
+      {"neuron": "C", "start": 5, "end": 8, "amplitude": -1.0}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [1.0, 1.0, 0.0],
+          [1.5, 1.0, 1.0],
+          [1.5, 3.5, 1.0],
+          [0.5, 1.5, 3.5],
+          [0.5, 0.5, 0.5],
+          [0.0, 0.5, -0.5],
+          [0.0, 0.0, -0.5],
+          [0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

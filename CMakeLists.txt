@@ -24,6 +24,11 @@ if(OW_SANITIZE)
   add_link_options(-fsanitize=address,undefined)
 endif()
 
+if(OW_ENABLE_FUZZ)
+  # Instrument the libraries too, so libFuzzer sees coverage inside the parser and canonicaliser.
+  add_compile_options(-fsanitize=fuzzer-no-link)
+endif()
+
 # Build identity recorded with every result (docs/language/WRL_SYNTAX.md, "Provenance").
 set(OW_BUILD_STRING
     "ow ${PROJECT_VERSION}; ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}; C++${CMAKE_CXX_STANDARD}; ${CMAKE_BUILD_TYPE}; fp-contract=off"

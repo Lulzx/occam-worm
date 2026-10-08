@@ -1,0 +1,33 @@
+{
+  "name": "convergence-gap",
+  "description": "Two-neuron gap diffusion converges to v_A(t) = 0.5 (1 + exp(-2 g t)) as dt shrinks.",
+  "derivation": "With identity local dynamics the scheme keeps a + b = 1 and multiplies a - b by (1 - dt g)/(1 + dt g) per step, so a_n = 0.5 (1 + ((1-r)/(1+r))^n). The script computed the errors for dts 0.1, 0.05, 0.025 (ratios about 0.25, the scheme is better than first order here) and checked max_ratio and max_error_finest.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 10,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 2.0}
+      ]
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"A": 1.0}
+    }
+  },
+  "check": {"type": "convergence", "dts": [0.1, 0.05, 0.025], "time": 1.0, "register": "v", "neuron": "A", "expected": 0.5091578194443671, "max_ratio": 0.35, "max_error_finest": 0.001}
+}

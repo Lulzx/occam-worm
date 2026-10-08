@@ -1,0 +1,65 @@
+{
+  "name": "gap-constant-equilibrium",
+  "description": "Uneven gap graph (with a parallel junction) at a uniform value 0.7 stays at 0.7.",
+  "derivation": "If every neuron and neighbour holds c, (c + dt c G) / (1 + dt G) = c for any conductances (property (a) of section 6.6), so every sampled value is 0.7 up to rounding.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0.7",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 20,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 0.3},
+        {"a": "B", "b": "C", "g": 1.7},
+        {"a": "B", "b": "C", "g": 0.4},
+        {"a": "C", "b": "D", "g": 2.2}
+      ]
+    },
+    "stimulus": []
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-14, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7]
+        ]
+      }
+    }
+  }
+}

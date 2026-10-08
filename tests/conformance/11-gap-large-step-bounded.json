@@ -1,0 +1,50 @@
+{
+  "name": "gap-large-step-bounded",
+  "description": "dt * g = 1000 (stiff) on a 3-node chain stays inside [-1, 1] and matches the exact rational formula.",
+  "derivation": "Section 6.6 evaluated with Fractions: (v_i + dt S_i) / (1 + dt G_i) with G = (1000, 1010, 10). The script asserts that every value stays in the initial range [-1, 1] (property (b)).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 5,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 1000.0},
+        {"a": "B", "b": "C", "g": 10.0}
+      ]
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"A": 1.0, "C": -1.0}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [1.0, 0.0, -1.0],
+          [0.000999000999000999, 0.9792284866468842, -0.09090909090909091],
+          [0.9782512344134698, 0.0010575060104421109, 0.8819432523236138],
+          [0.0020337235213342465, 0.9763320716545167, 0.08113802840254863],
+          [0.9753587466314066, 0.0037798574451179522, 0.8949507949952469],
+          [0.004750465726023335, 0.9736024079513395, 0.0847953972224024]
+        ]
+      }
+    }
+  }
+}

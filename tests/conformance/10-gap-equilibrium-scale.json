@@ -1,0 +1,66 @@
+{
+  "name": "gap-equilibrium-scale",
+  "description": "Uniform 0.7 on a gap ring with a scale parameter at its default (lo + hi) / 2 = 2.5.",
+  "derivation": "The scale multiplies every conductance but equilibrium preservation holds for any non-negative conductances, so all values stay at 0.7 up to rounding.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0.7",
+      "param k : 1 in [0, 5] trainable bits 8",
+      "gap v scale k",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 20,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 0.3},
+        {"a": "B", "b": "C", "g": 1.7},
+        {"a": "C", "b": "D", "g": 2.2},
+        {"a": "A", "b": "D", "g": 0.9}
+      ]
+    },
+    "stimulus": []
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-14, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7],
+          [0.7, 0.7, 0.7, 0.7]
+        ]
+      }
+    }
+  }
+}

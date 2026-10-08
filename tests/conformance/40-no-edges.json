@@ -1,0 +1,52 @@
+{
+  "name": "no-edges",
+  "description": "No chemical or gap edges at all: nothing propagates and the gap stage leaves values unchanged.",
+  "derivation": "Without edges sum_in is 0 and G = S = 0, so a neuron only sees its own stimulus: A(t+1) = u_A(t) and B = C = 0 forever.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "input e = sum_in(v, exc)",
+      "next v = euler_leak(v, u + e, tau)",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 6,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 5, "amplitude": 1.0}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

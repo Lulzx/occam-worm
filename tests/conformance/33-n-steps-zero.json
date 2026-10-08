@@ -1,0 +1,45 @@
+{
+  "name": "n-steps-zero",
+  "description": "n_steps = 0 samples only the initial state; the calcium observation starts at the register (steady state).",
+  "derivation": "No step is taken: tick 0 reports the initial registers (0.75, with B overridden to 0.25) and c(0) = x(0).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0.75",
+      "param tau : s = 0.5 fixed",
+      "next v = decay(v, tau)",
+      "observe calcium_linear_v1(v, 0.5[s])"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 0,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"B": 0.25}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.75, 0.25]
+        ]
+      },
+      "observation": [
+        [0.75, 0.25]
+      ]
+    }
+  }
+}

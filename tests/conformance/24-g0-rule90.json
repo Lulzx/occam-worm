@@ -1,0 +1,70 @@
+{
+  "name": "g0-rule90",
+  "description": "Ring of 8 cells with in-edges from both ring neighbours; one live cell; elementary rule 90.",
+  "derivation": "count_in(s, 1) is the number of live neighbours; lut [0, 1, 0] maps it to the XOR of the two neighbours: new[i] = old[i-1] xor old[i+1], iterated 6 generations by hand from a single live cell.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "next s = lut(count_in(s, 1), [0, 1, 0])",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 6,
+    "graph": {
+      "neurons": [
+        {"id": "N0"},
+        {"id": "N1"},
+        {"id": "N2"},
+        {"id": "N3"},
+        {"id": "N4"},
+        {"id": "N5"},
+        {"id": "N6"},
+        {"id": "N7"}
+      ],
+      "chemical": [
+        {"pre": "N0", "post": "N7", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N0", "post": "N1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N1", "post": "N0", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N1", "post": "N2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N2", "post": "N1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N2", "post": "N3", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N3", "post": "N2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N3", "post": "N4", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N4", "post": "N3", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N4", "post": "N5", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N5", "post": "N4", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N5", "post": "N6", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N6", "post": "N5", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N6", "post": "N7", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N7", "post": "N6", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N7", "post": "N0", "weight": 1.0, "sign": 1, "delay": 0}
+      ],
+      "gap": []
+    },
+    "stimulus": [],
+    "initial_state": {
+      "s": {"N3": 1}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "s": [
+          [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

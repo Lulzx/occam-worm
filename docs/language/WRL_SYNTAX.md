@@ -184,7 +184,7 @@ Rules for consumers:
 }
 ```
 
-Identifiers (neuron ids, types) match `[A-Za-z0-9_.:-]{1,64}`. Parallel edges are allowed; a gap junction listed once is one undirected junction (listing `(a,b)` and `(b,a)` makes two parallel junctions). Parameter or register names that were eliminated as dead code are accepted and ignored.
+`observed` neurons are reported in the listed order (duplicates allowed). `delete_chemical [pre, post]` removes **every** parallel chemical edge from `pre` to `post`; `delete_gap [a, b]` removes every junction between `a` and `b`, given in either order; unknown ids are `E_GRAPH`. A stimulus `end` beyond `n_steps` is allowed. Identifiers (neuron ids, types) match `[A-Za-z0-9_.:-]{1,64}`. Parallel edges are allowed; a gap junction listed once is one undirected junction (listing `(a,b)` and `(b,a)` makes two parallel junctions). Parameter or register names that were eliminated as dead code are accepted and ignored.
 
 ### 6.2 Graph arrays and summation order
 
@@ -246,7 +246,7 @@ For the register `g` named by `gap g [scale p]`, with `s = value of p` (1 if no 
 x_g[i](t+1) = ( w_g[i] + dt * S_i ) / ( 1 + dt * G_i )
 ```
 
-This is backward Euler on the diagonal of the coupling term with neighbours taken from the old state: `x_i' = w_i + dt * sum_j c_ij (x_j - x_i')`. Properties (tested in the conformance suite): (a) **constant equilibrium is preserved**: if `w_g[j] = x_g[j](t) = c` for all neighbours, the result is exactly `c` up to rounding; (b) **unconditionally stable**: the result is a convex combination of `w_g[i]` and the old neighbour values, so it never leaves their range for any `dt * c`; (c) first-order accurate; (d) it does **not** conserve the total of the register exactly (a symmetric Jacobi-style scheme, chosen for exact replicability and order independence, not for conservation). Neurons without junctions get `w_g[i]` unchanged (`G = S = 0`). The `gap` stage acts on exactly one register.
+This is backward Euler on the diagonal of the coupling term with neighbours taken from the old state: `x_i' = w_i + dt * sum_j c_ij (x_j - x_i')`. Properties (tested in the conformance suite): (a) **constant equilibrium is preserved**: if `w_g[j] = x_g[j](t) = c` for all neighbours, the result is exactly `c` up to rounding; (b) **unconditionally stable**: the result is a convex combination of `w_g[i]` and the old neighbour values, so it never leaves their range for any `dt * c`; (c) consistent and at least first-order accurate (for two nodes with identity local dynamics it is second order); (d) it does **not** conserve the total of the register exactly (a symmetric Jacobi-style scheme, chosen for exact replicability and order independence, not for conservation). Neurons without junctions get `w_g[i]` unchanged (`G = S = 0`). The `gap` stage acts on exactly one register.
 
 ### 6.7 Observation
 

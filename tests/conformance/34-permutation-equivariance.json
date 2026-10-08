@@ -1,0 +1,65 @@
+{
+  "name": "permutation-equivariance",
+  "description": "Mixed-sign, delayed chemical edges, gap junctions, types and a calcium observation; neurons reordered.",
+  "derivation": "Relabelling the neuron order must not change any per-neuron output beyond summation-order rounding (section 7, check type permutation). No numeric expectation is needed: the invariance is the property.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "param tau : s = 0.3 in [0.1, 2] trainable bits 8",
+      "param k : 1 = 1.5 in [0, 4] trainable bits 8",
+      "input u = stimulus",
+      "input e = sum_in(v, exc)",
+      "input h = sum_in(v, inh)",
+      "input m = type_mask(x)",
+      "next v = leaky_integrate(v, tanh(u + e - h + m + 0.25 * delay(v, 2)), tau)",
+      "gap v scale k",
+      "observe calcium_linear_v1(v, tau)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 12,
+    "graph": {
+      "neurons": [
+        {"id": "N0", "type": "x"},
+        {"id": "N1", "type": "y"},
+        {"id": "N2", "type": "x"},
+        {"id": "N3", "type": "z"},
+        {"id": "N4", "type": "y"},
+        {"id": "N5", "type": "x"}
+      ],
+      "chemical": [
+        {"pre": "N0", "post": "N1", "weight": 0.8, "sign": 1, "delay": 0},
+        {"pre": "N0", "post": "N2", "weight": 0.3, "sign": 1, "delay": 2},
+        {"pre": "N1", "post": "N3", "weight": 1.2, "sign": -1, "delay": 0},
+        {"pre": "N2", "post": "N3", "weight": 0.6, "sign": 1, "delay": 1},
+        {"pre": "N3", "post": "N4", "weight": 0.9, "sign": 1, "delay": 0},
+        {"pre": "N3", "post": "N4", "weight": 0.4, "sign": -1, "delay": 3},
+        {"pre": "N4", "post": "N5", "weight": 1.1, "sign": 1, "delay": 1},
+        {"pre": "N5", "post": "N0", "weight": 0.5, "sign": -1, "delay": 0},
+        {"pre": "N5", "post": "N2", "weight": 0.7, "sign": 1, "delay": 2}
+      ],
+      "gap": [
+        {"a": "N0", "b": "N3", "g": 1.5},
+        {"a": "N1", "b": "N4", "g": 0.4},
+        {"a": "N2", "b": "N5", "g": 2.5},
+        {"a": "N4", "b": "N5", "g": 0.8}
+      ]
+    },
+    "stimulus": [
+      {"neuron": "N0", "start": 0, "end": 5, "amplitude": 1.2},
+      {"neuron": "N3", "start": 2, "end": 4, "amplitude": -0.8},
+      {"neuron": "N5", "start": 6, "end": 9, "amplitude": 0.9}
+    ],
+    "initial_state": {
+      "v": {"N1": 0.3, "N4": -0.2}
+    }
+  },
+  "check": {
+    "type": "permutation",
+    "permutation": [3, 0, 5, 1, 4, 2],
+    "tolerance": {"abs": 1e-12, "rel": 0}
+  }
+}

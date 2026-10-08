@@ -59,7 +59,7 @@ std::vector<Token> tokenize(std::string_view source) {
                 advance(1);
             }
             if (i - start > kMaxIdentLength) {
-                throw Error(Errc::Syntax, "identifier longer than " + std::to_string(kMaxIdentLength) + " characters", line,
+                throw Error(Errc::Limit, "identifier longer than " + std::to_string(kMaxIdentLength) + " characters", line,
                             start_column);
             }
             push({Token::Kind::Ident, std::string(source.substr(start, i - start)), 0.0, line, start_column});

@@ -1,0 +1,63 @@
+{
+  "name": "type-mask-mixed-identities",
+  "description": "Neurons of types a, b, generic and A; the program branches on type_mask; only some neurons are reported.",
+  "derivation": "target = select(type_mask(a), 2 u, 3 type_mask(b) u) gives gain 2 for type a, 3 for b and 0 for generic and for 'A' (exact, case-sensitive match). With u = 1 on ticks 1..2 and dt = tau = 1: v(t+1) = gain u(t).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "next v = euler_leak(v, select(type_mask(a), 2 * u, 3 * type_mask(b) * u), tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 5,
+    "graph": {
+      "neurons": [
+        {"id": "n0", "type": "a"},
+        {"id": "n1", "type": "b"},
+        {"id": "n2", "type": "a"},
+        {"id": "n3", "type": "b"},
+        {"id": "n4"},
+        {"id": "n5", "type": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "n0", "start": 1, "end": 3, "amplitude": 1.0},
+      {"neuron": "n1", "start": 1, "end": 3, "amplitude": 1.0},
+      {"neuron": "n2", "start": 1, "end": 3, "amplitude": 1.0},
+      {"neuron": "n3", "start": 1, "end": 3, "amplitude": 1.0},
+      {"neuron": "n4", "start": 1, "end": 3, "amplitude": 1.0},
+      {"neuron": "n5", "start": 1, "end": 3, "amplitude": 1.0}
+    ],
+    "observed": [
+      "n1",
+      "n2",
+      "n3",
+      "n5"
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [3.0, 2.0, 3.0, 0.0],
+          [3.0, 2.0, 3.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

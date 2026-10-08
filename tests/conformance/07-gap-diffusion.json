@@ -1,0 +1,47 @@
+{
+  "name": "gap-diffusion",
+  "description": "Two neurons with one gap junction, identity local dynamics, v = (1, 0), g = 2, dt = 0.1.",
+  "derivation": "Section 6.6 with w = x: v_i' = (v_i + dt g v_j) / (1 + dt g), evaluated exactly with rational arithmetic from the old values for four steps (the sum is conserved for two nodes, the difference shrinks by (1 - dt g)/(1 + dt g) per step).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 4,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 2.0}
+      ]
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"A": 1.0}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [1.0, 0.0],
+          [0.8333333333333334, 0.16666666666666669],
+          [0.7222222222222222, 0.2777777777777778],
+          [0.6481481481481481, 0.35185185185185186],
+          [0.5987654320987654, 0.4012345679012346]
+        ]
+      }
+    }
+  }
+}
