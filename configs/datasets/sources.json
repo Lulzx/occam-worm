@@ -916,7 +916,7 @@
       },
       "metadata_retrieved_at": "2026-10-08T03:47:36Z",
       "assets": [
-        {"path": "pumpprobe-5ca97c72a3be.tar.gz", "url": "https://codeload.github.com/leiferlab/pumpprobe/tar.gz/5ca97c72a3be2582c25a1ce307da7fc0c57ad7db", "size": null, "sha256": null}
+        {"path": "pumpprobe-5ca97c72a3be.tar.gz", "url": "https://codeload.github.com/leiferlab/pumpprobe/tar.gz/5ca97c72a3be2582c25a1ce307da7fc0c57ad7db", "size": 1214366, "sha256": "5225ad2d4aa6f52c5b9b76d0414ad00cd273c5b7f12e794c60a99d2b7571362f"}
       ]
     },
     {
@@ -949,7 +949,7 @@
       },
       "metadata_retrieved_at": "2026-10-08T03:47:37Z",
       "assets": [
-        {"path": "wormdatamodel-2ab956199e39.tar.gz", "url": "https://codeload.github.com/leiferlab/wormdatamodel/tar.gz/2ab956199e3931de41a190d2b9985e961df3810c", "size": null, "sha256": null}
+        {"path": "wormdatamodel-2ab956199e39.tar.gz", "url": "https://codeload.github.com/leiferlab/wormdatamodel/tar.gz/2ab956199e3931de41a190d2b9985e961df3810c", "size": 189923, "sha256": "0be67ffe2da87e61ab67b0f04842e43696f592d699f7c254fc1610109df7598d"}
       ]
     },
     {
@@ -982,7 +982,7 @@
       },
       "metadata_retrieved_at": "2026-10-08T03:47:39Z",
       "assets": [
-        {"path": "wormbrain-d94f7a145662.tar.gz", "url": "https://codeload.github.com/leiferlab/wormbrain/tar.gz/d94f7a1456622f77eebcc181de1d8504618764c4", "size": null, "sha256": null}
+        {"path": "wormbrain-d94f7a145662.tar.gz", "url": "https://codeload.github.com/leiferlab/wormbrain/tar.gz/d94f7a1456622f77eebcc181de1d8504618764c4", "size": 219265, "sha256": "74ccac99255c7c2c6dd91ee2a1985d30047835efb6f87b46541cf0317419c956"}
       ]
     },
     {
@@ -1048,7 +1048,7 @@
       },
       "metadata_retrieved_at": "2026-10-08T03:47:41Z",
       "assets": [
-        {"path": "wormneuroatlas-b2e13d88b670.tar.gz", "url": "https://codeload.github.com/francescorandi/wormneuroatlas/tar.gz/b2e13d88b670efcb3438aeacba2ad4bd6c383933", "size": null, "sha256": null}
+        {"path": "wormneuroatlas-b2e13d88b670.tar.gz", "url": "https://codeload.github.com/francescorandi/wormneuroatlas/tar.gz/b2e13d88b670efcb3438aeacba2ad4bd6c383933", "size": 38996631, "sha256": "6d106388217fc447087a3dba3b44eae5424bb2f86abdcfe721939de856967b29"}
       ]
     },
     {
@@ -1081,7 +1081,7 @@
       },
       "metadata_retrieved_at": "2026-10-08T03:47:42Z",
       "assets": [
-        {"path": "ConnectomeToolbox-ffe570268b7c.tar.gz", "url": "https://codeload.github.com/openworm/ConnectomeToolbox/tar.gz/ffe570268b7cffb9329cd009a1bb37d60db2d465", "size": null, "sha256": null}
+        {"path": "ConnectomeToolbox-ffe570268b7c.tar.gz", "url": "https://codeload.github.com/openworm/ConnectomeToolbox/tar.gz/ffe570268b7cffb9329cd009a1bb37d60db2d465", "size": 22750064, "sha256": "97413a3ed49ddc6b90dbb1fb16fb59b029a588d3731de7431ad4804e2e3d0c54"}
       ]
     },
     {
