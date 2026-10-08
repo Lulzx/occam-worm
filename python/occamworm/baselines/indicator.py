@@ -119,14 +119,20 @@ def estimate_from_autoresponses(
         pick = by_animal[rng.integers(0, len(uniq), len(uniq))]
         f, _ = fit_to_mean_response(np.nanmean(pick, axis=0), dt)
         taus.append((f.tau_r, f.tau_d))
-    tr = np.array(taus)
+    tr = np.array(taus).reshape(-1, 2)
+
+    def ci(col: int) -> list[float] | None:
+        if not reps:
+            return None
+        return [float(np.quantile(tr[:, col], 0.025)), float(np.quantile(tr[:, col], 0.975))]
+
     return {
         "indicator": fit,
         "amplitude": amp,
         "n_traces": int(keep.sum()),
         "n_animals": len(uniq),
-        "tau_r_ci95": [float(np.quantile(tr[:, 0], 0.025)), float(np.quantile(tr[:, 0], 0.975))],
-        "tau_d_ci95": [float(np.quantile(tr[:, 1], 0.025)), float(np.quantile(tr[:, 1], 0.975))],
+        "tau_r_ci95": ci(0),
+        "tau_d_ci95": ci(1),
         "interpretation": "upper bound: autoresponse = indicator * (stimulated neuron's own activity)",
     }
 

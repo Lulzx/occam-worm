@@ -96,6 +96,8 @@ class TaskData:
     trial_animal: IntArray
     trial_target: IntArray
     trial_input: FloatArray  # (n_trials, PRE+T) interpolated autoresponse (T2a) or zeros (T2b)
+    trial_auto: FloatArray  # (n_trials, PRE+T) interpolated autoresponse where available (indicator estimation)
+    trial_auto_ok: BoolArray  # autoresponse tracked in >= MIN_AUTORESPONSE_VALID of the window
     trial_z: FloatArray  # stimulation index / STIM_INDEX_SCALE
     trace_trial: IntArray
     trace_pair: IntArray
@@ -174,12 +176,16 @@ def build_task(
     p_index = {p: i for i, p in enumerate(pairs)}
 
     u = np.zeros((trials.size, PRE + T))
-    if task == "T2a":
-        grid = np.arange(PRE + T, dtype=np.float64)
-        for i, k in enumerate(trials):
-            r = target_row[k]
-            v = w.valid[r]
-            u[i] = np.interp(grid, grid[v], w.dff[r][v].astype(np.float64)) if v.any() else 0.0
+    auto_ok = np.zeros(trials.size, dtype=bool)
+    grid = np.arange(PRE + T, dtype=np.float64)
+    for i, k in enumerate(trials):
+        r = target_row[k]
+        if r < 0 or not np.isfinite(ar_frac[k]) or ar_frac[k] < MIN_AUTORESPONSE_VALID:
+            continue
+        v = w.valid[r]
+        if v.any():
+            u[i] = np.interp(grid, grid[v], w.dff[r][v].astype(np.float64))
+            auto_ok[i] = True
 
     pre = w.dff[resp, :PRE].astype(np.float64)
     pv = w.valid[resp, :PRE]
@@ -203,7 +209,9 @@ def build_task(
         trial_ids=[str(t["trial_id"][k]) for k in trials],
         trial_animal=np.array([a_index[str(animal[k])] for k in trials], dtype=np.int64),
         trial_target=np.array([t_index[str(target_nid[k])] for k in trials], dtype=np.int64),
-        trial_input=u,
+        trial_input=u if task == "T2a" else np.zeros_like(u),
+        trial_auto=u,
+        trial_auto_ok=auto_ok,
         trial_z=stim_idx[trials] / STIM_INDEX_SCALE,
         trace_trial=win_trial_pos[resp],
         trace_pair=np.array([p_index[p] for p in pair_keys], dtype=np.int64),
@@ -262,11 +270,11 @@ def compute_stats(data: TaskData, designs: FloatArray) -> Stats:
         yv = np.where(data.m[rows], data.y[rows], 0.0).astype(np.float64)
         q = data.q_columns(rows)
         ent = entry_of[rows]
-        np.add.at(G, ent, np.einsum("tm,rt,tk->rmk", x, mm, x))
-        np.add.at(XQ, ent, np.einsum("tm,rt,rth->rmh", x, mm, q))
+        np.add.at(G, ent, np.einsum("tm,rt,tk->rmk", x, mm, x, optimize=True))
+        np.add.at(XQ, ent, np.einsum("tm,rt,rth->rmh", x, mm, q, optimize=True))
         np.add.at(Xy, ent, np.einsum("tm,rt->rm", x, yv))
         a = data.trial_animal[k]
-        QQ[a] += np.einsum("rth,rt,rtk->hk", q, mm, q)
+        QQ[a] += np.einsum("rth,rt,rtk->hk", q, mm, q, optimize=True)
         Qy[a] += np.einsum("rth,rt->h", q, yv)
         yy[a] += float((yv**2).sum())
         nn[a] += float(mm.sum())

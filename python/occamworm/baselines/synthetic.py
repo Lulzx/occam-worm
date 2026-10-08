@@ -113,6 +113,8 @@ def generate(spec: SyntheticSpec, kernels: FloatArray | None = None) -> tuple[Ta
         trial_animal=np.array(trial_animal, dtype=np.int64),
         trial_target=np.array(trial_target, dtype=np.int64),
         trial_input=u_all if spec.task == "T2a" else np.zeros_like(u_all),
+        trial_auto=u_all,
+        trial_auto_ok=np.full(n_trials, spec.task == "T2a"),
         trial_z=np.array(z),
         trace_trial=np.array(tt, dtype=np.int64),
         trace_pair=np.array(tp, dtype=np.int64),

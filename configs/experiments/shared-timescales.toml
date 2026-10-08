@@ -1,40 +1,47 @@
-# Illustrative configuration from spec §14.6. Not read by any tool yet.
-# Fold counts are provisional: the split scheme is frozen from the M0 coverage tables (§2.3).
+# Shared-timescale baseline benchmark (§4, §14.6). Read by `python -m occamworm.baselines benchmark`.
+# Frozen 2026-10-08 before any outer fold was scored; changes require a new experiment name.
 
 [experiment]
 name = "shared-timescales-wt-v1"
 question = "Do shared response timescales generalize across animals?"
 primary_condition = "wild-type"
 primary_metric = "animal_paired_predictive_nll_difference"
-primary_task = "T2a_autoresponse_conditioned"
-secondary_tasks = ["T2b_nominal_stimulus"]
+primary_task = "T2a"
+secondary_tasks = ["T2b"]
 
 [data]
-manifest = "configs/datasets/primary.toml"
+dataset = "randi2023-wt-v1"
+eligibility = "artifacts/audit-v2/target_eligibility.parquet"
 use_individual_trials = true
 include_valid_near_null_responses = true
-calibration_policy = "pre_stimulus_only"
-history_term = "frozen_from_training_audit"
-initial_state_policy = "history_conditioned"   # default unless the M0 audit finds no carryover (§6.7)
+calibration_policy = "pre_stimulus_only"       # dF/F baseline and noise scale from the trial's own pre-stimulus window
+# Open decision 13: history term. Both variants are fitted; per outer fold the variant with the better
+# inner-validation score is selected, and both are reported.
+history_terms = ["none", "pre_stimulus_slope_and_stim_index"]
+initial_state_policy = "history_conditioned"
 
 [splits]
-unit = "animal_id"
-outer = "group_kfold"            # provisional; frozen from M0 coverage tables
-outer_folds = 5
-inner = "group_kfold"
-inner_folds = 3
-seed = 20261008
-scheme_justification = "artifacts/audit-v1/fold_coverage.parquet"
+split = "data/splits/randi2023-wt-v1-loao/split.json"   # leave-one-animal-out x 5 inner folds (OW-004)
 
 [models]
-names = ["null", "shared_kernel", "low_rank_kernels", "independent_kernels", "linear_network"]
+families = ["B0", "B1", "B1d", "B2-K1", "B2-K2", "B2-K4", "B2-K8", "B3", "B4-fixed", "B4-learned"]
+ridge_grid = [0.1, 1.0, 10.0, 100.0]   # relative to median trace(G_p)/M of the training data
+kernel_knots_volumes = [0, 1, 2, 4, 6, 9, 13, 18, 25, 33, 43, 59]
+b1d_delays_volumes = [-2, -1, 0, 1, 2]
 
 [observation]
-family = "student_t_correlated"
+# Open decision 3: Gaussian AR(1) residuals, sigma_n^2 = a^2 s_n^2 + b^2, fitted on training residuals only.
+family = "gaussian_ar1"
 fit_noise_on = "training_only"
 allow_test_specific_scale_calibration = false
-indicator_stage = "separate_fitted"
+indicator_stage = "separate_fitted"   # difference of exponentials from training-fold autoresponses (T2b)
 indicator_control = true
+
+[indicator_control]
+# Open decision 14: a false-sharing rate at or below this value counts as low.
+false_sharing_threshold = 0.05
+false_sharing_replicates = 40
+false_sharing_seed = 20261008
 
 [report]
 bootstrap_unit = "animal"

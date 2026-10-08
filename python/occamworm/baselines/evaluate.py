@@ -22,10 +22,10 @@ from occamworm.baselines.kernels import Fit, fit_family
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
 BoolArray = npt.NDArray[np.bool_]
-LAM_GRID = (0.01, 0.1, 1.0, 10.0)
+LAM_GRID = (0.1, 1.0, 10.0, 100.0)
 NOISE_TRACES = 30_000
 
-Fitter = Callable[[PairStats, float], Fit]
+Fitter = Callable[[PairStats, float, Fit | None], Fit]  # (stats, ridge, warm start) -> fit
 
 
 @dataclass
@@ -72,8 +72,8 @@ def score_rows(
 
 
 def make_fitter(data: TaskData, family: str) -> Fitter:
-    def fitter(ps: PairStats, lam_rel: float) -> Fit:
-        return fit_family(family, ps, data.pair_target, len(data.targets), lam_rel)
+    def fitter(ps: PairStats, lam_rel: float, init: Fit | None) -> Fit:
+        return fit_family(family, ps, data.pair_target, len(data.targets), lam_rel, init=init)
 
     return fitter
 
@@ -96,20 +96,25 @@ def evaluate_fold(
     n_pairs = len(data.pairs)
     grid = (0.0,) if family == "B0" else tuple(lam_grid)
     inner_scores = {lam: 0.0 for lam in grid}
+    last_inner: dict[float, Fit] = {}  # inner fits are on subsets of the outer training animals
     for itrain, ival in inner:
         if np.any(itrain & ival) or np.any((itrain | ival) & test):
             raise RuntimeError("inner folds leak the outer test animals")
         ps = aggregate(stats, itrain, n_pairs)
-        fits = {lam: fitter(ps, lam) for lam in grid}
+        fits: dict[float, Fit] = {}
+        warm: Fit | None = None
+        for lam in sorted(grid):  # warm-start along the ridge path, within this inner training set
+            warm = fits[lam] = fitter(ps, lam, warm)
         ref = fits[grid[len(grid) // 2]]
         noise = noise_for(data, designs, ref, rows_of(data, itrain))
         vrows = rows_of(data, ival)
         for lam, f in fits.items():
             nll, _, _ = score_rows(data, designs, f, noise, vrows)
             inner_scores[lam] += float(nll.sum())
+        last_inner = fits
     lam_best = min(grid, key=lambda lam: (inner_scores[lam], lam))
     ps = aggregate(stats, train, n_pairs)
-    fit = fitter(ps, lam_best)
+    fit = fitter(ps, lam_best, last_inner.get(lam_best))
     noise = noise_for(data, designs, fit, rows_of(data, train))
     trows = rows_of(data, test)
     nll, e, v = score_rows(data, designs, fit, noise, trows)

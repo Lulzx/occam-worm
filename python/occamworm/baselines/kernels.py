@@ -7,7 +7,7 @@ the constraint on ``c_p`` (§4.1: "equally legitimate regularization"):
 
 - B0 null:            c_p = 0
 - B1 shared per target: c_p = a_p h_j            (h_j shared by the responders of target j)
-- B1d with delays:     c_p = (a_p I + b_p D) h_j  (first-order per-pair delay; D differentiates the kernel)
+- B1d with delays:     c_p = a_p S_{d_p} h_j       (per-pair delay d_p in DELAYS volumes; S_d shifts the kernel)
 - B2 low-rank bank:    c_p = V a_p, V (M x K)    (K global kernels; K = 1 is the stringent global B1)
 - B3 independent:      c_p free                   (closed form)
 
@@ -24,13 +24,14 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from occamworm.baselines.data import KERNEL_KNOTS, M, PairStats
+from occamworm.baselines.data import M, PairStats
 
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
 EPS = 1e-9
-MAX_ITER = 300
-TOL = 1e-9
+MAX_ITER = 200
+MAX_ITER_DELAYS = 60  # B1d improves by < 1e-7 per sweep after ~50 sweeps; recorded as not converged
+TOL = 1e-7
 
 
 @dataclass
@@ -49,20 +50,29 @@ def lam_scale(ps: PairStats) -> float:
     return float(np.median(tr)) if tr.size else 1.0
 
 
-def derivative_matrix() -> FloatArray:
-    """D such that (D h)[m] approximates dh/dt (per volume) at knot m of the piecewise-linear kernel."""
-    k = KERNEL_KNOTS.astype(np.float64)
-    d = np.zeros((M, M))
-    for m in range(M):
-        lo, hi = max(m - 1, 0), min(m + 1, M - 1)
-        d[m, hi] += 1.0 / (k[hi] - k[lo])
-        d[m, lo] -= 1.0 / (k[hi] - k[lo])
-    return d
+DELAYS = (-2, -1, 0, 1, 2)  # volumes, relative to the target's shared kernel
+
+
+def shift_matrices() -> FloatArray:
+    """S_d (len(DELAYS), M, M): tent coefficients of kernel(t - d), least-squares projected back onto the basis."""
+    from occamworm.baselines.data import KERNEL_BASIS
+
+    pinv = np.linalg.pinv(KERNEL_BASIS)
+    n = KERNEL_BASIS.shape[0]
+    out = np.zeros((len(DELAYS), M, M))
+    for i, dd in enumerate(DELAYS):
+        shifted = np.zeros_like(KERNEL_BASIS)
+        if dd >= 0:
+            shifted[dd:] = KERNEL_BASIS[: n - dd]
+        else:
+            shifted[: n + dd] = KERNEL_BASIS[-dd:]
+        out[i] = pinv @ shifted
+    return out
 
 
 def loss(ps: PairStats, c: FloatArray, beta: FloatArray, lam: float) -> float:
-    quad = np.einsum("pm,pmk,pk->", c, ps.G, c)
-    cross = 2.0 * np.einsum("pm,pmh,h->", c, ps.XQ, beta)
+    quad = np.einsum("pm,pmk,pk->", c, ps.G, c, optimize=True)
+    cross = 2.0 * np.einsum("pm,pmh,h->", c, ps.XQ, beta, optimize=True)
     lin = -2.0 * np.einsum("pm,pm->", c, ps.Xy)
     return float(quad + cross + lin + lam * np.sum(c**2) + beta @ ps.QQ @ beta - 2.0 * beta @ ps.Qy + ps.yy)
 
@@ -117,69 +127,104 @@ def _top_vectors(c: FloatArray, groups: IntArray | None, n_groups: int, k: int) 
     return np.stack([lead(c[groups == g], 1)[:, 0] for g in range(n_groups)])
 
 
-def fit_shared(ps: PairStats, pair_target: IntArray, n_targets: int, lam_rel: float, delays: bool = False) -> Fit:
-    """B1 (and B1d with ``delays``): one kernel per stimulated target, per-pair amplitude (and delay)."""
+def fit_shared(
+    ps: PairStats,
+    pair_target: IntArray,
+    n_targets: int,
+    lam_rel: float,
+    delays: bool = False,
+    init: Fit | None = None,
+) -> Fit:
+    """B1 (and B1d with ``delays``): one kernel per stimulated target, per-pair amplitude (and discrete delay).
+
+    ``init`` warm-starts the kernels from an earlier fit on a subset or superset of the same training animals;
+    it never comes from held-out data.
+    """
     lam = lam_rel * lam_scale(ps)
-    init = fit_independent(ps, lam_rel)
-    h = _top_vectors(init.c, pair_target, n_targets, 1)  # (J, M)
-    beta = init.beta
-    d = derivative_matrix()
-    n_coef = 2 if delays else 1
-    coef = np.zeros((ps.Xy.shape[0], n_coef))
+    if init is not None and "kernels" in init.extra:
+        h = np.array(init.extra["kernels"], dtype=np.float64)
+        beta = init.beta.copy()
+    else:
+        start = fit_independent(ps, lam_rel)
+        h = _top_vectors(start.c, pair_target, n_targets, 1)  # (J, M)
+        beta = start.beta
+    shifts = shift_matrices() if delays else np.eye(M)[None]
+    zero = DELAYS.index(0) if delays else 0
+    gl = ps.G + lam * np.eye(M)
+    live = ps.present
+    n_p = ps.Xy.shape[0]
+    amp = np.zeros(n_p)
+    which = np.full(n_p, zero, dtype=np.int64)
     prev = np.inf
+    cur = np.inf
+    c = np.zeros_like(ps.Xy)
     it = 0
-    for it in range(1, MAX_ITER + 1):  # noqa: B007
+    converged = False
+    for it in range(1, (MAX_ITER_DELAYS if delays else MAX_ITER) + 1):  # noqa: B007
         r = _resid_rhs(ps, beta)
-        hp = h[pair_target]  # (P, M)
-        basis = np.stack([hp, hp @ d.T], axis=2)[:, :, :n_coef]  # (P, M, n_coef)
-        gb = np.einsum("pmk,pkc->pmc", ps.G + lam * np.eye(M), basis)
-        lhs = np.einsum("pmc,pmd->pcd", basis, gb) + EPS * np.eye(n_coef)
-        coef = np.linalg.solve(lhs, np.einsum("pmc,pm->pc", basis, r)[..., None])[..., 0]
-        coef[~ps.present] = 0.0
-        # kernel update per target: c_p = A_p h with A_p = a_p I + b_p D
-        for j in range(n_targets):
-            sel = np.nonzero((pair_target == j) & ps.present)[0]
-            if sel.size == 0:
-                continue
-            a_mats = coef[sel, 0, None, None] * np.eye(M)
-            if delays:
-                a_mats = a_mats + coef[sel, 1, None, None] * d
-            g = ps.G[sel] + lam * np.eye(M)
-            lhs_h = np.einsum("pkm,pkl,pln->mn", a_mats, g, a_mats) + EPS * np.eye(M)
-            rhs_h = np.einsum("pkm,pk->m", a_mats, r[sel])
-            hj = np.linalg.solve(lhs_h, rhs_h)
-            norm = np.linalg.norm(hj)
-            if norm > 0:
-                h[j] = hj / norm
-                coef[sel] *= norm
-        c = np.einsum("pmk,pk->pm", np.stack([h[pair_target], h[pair_target] @ d.T], axis=2)[:, :, :n_coef], coef)
+        # pair step: best delay and amplitude given the target kernel
+        v = np.einsum("dmk,pk->pdm", shifts, h[pair_target])  # (P, D, M)
+        num = np.einsum("pdm,pm->pd", v, r)
+        den = np.sum(v * np.transpose(gl @ np.transpose(v, (0, 2, 1)), (0, 2, 1)), axis=2) + EPS
+        gain = num**2 / den
+        which = np.where(live, np.argmax(gain - 1e-12 * np.abs(np.arange(shifts.shape[0]) - zero), axis=1), zero)
+        amp = np.where(live, num[np.arange(n_p), which] / den[np.arange(n_p), which], 0.0)
+        # kernel step: c_p = a_p S_p h_j, solved per target
+        sp = shifts[which]  # (P, M, M)
+        sgs = np.transpose(sp, (0, 2, 1)) @ gl @ sp
+        lhs_j = np.zeros((n_targets, M, M))
+        rhs_j = np.zeros((n_targets, M))
+        np.add.at(lhs_j, pair_target[live], (amp**2)[live, None, None] * sgs[live])
+        np.add.at(rhs_j, pair_target[live], amp[live, None] * np.einsum("pkm,pk->pm", sp[live], r[live]))
+        has = np.zeros(n_targets, dtype=bool)
+        has[pair_target[live]] = True
+        hj = np.linalg.solve(lhs_j[has] + EPS * np.eye(M), rhs_j[has][..., None])[..., 0]
+        norm = np.linalg.norm(hj, axis=1)
+        ok = norm > 0
+        idx = np.nonzero(has)[0][ok]
+        h[idx] = hj[ok] / norm[ok, None]
+        scale = np.ones(n_targets)
+        scale[idx] = norm[ok]
+        amp = amp * scale[pair_target]
+        c = amp[:, None] * np.einsum("pmk,pk->pm", sp, h[pair_target])
         beta = _beta(ps, c)
         cur = loss(ps, c, beta, lam)
         if abs(prev - cur) <= TOL * max(1.0, abs(cur)):
+            converged = True
             break
         prev = cur
-    used = np.unique(pair_target[ps.present])
-    n_params = used.size * M + int(ps.present.sum()) * n_coef + beta.size
-    return Fit("B1d" if delays else "B1", c, beta, cur, n_params, it, {"lam": lam, "kernels": h, "pair_coef": coef})
+    used = np.unique(pair_target[live])
+    n_params = used.size * M + int(live.sum()) * (2 if delays else 1) + beta.size
+    extra: dict[str, Any] = {"lam": lam, "kernels": h, "pair_amplitude": amp, "converged": converged}
+    if delays:
+        extra["pair_delay_volumes"] = np.asarray(DELAYS)[which]
+    return Fit("B1d" if delays else "B1", c, beta, cur, n_params, it, extra)
 
 
-def fit_lowrank(ps: PairStats, k: int, lam_rel: float) -> Fit:
-    """B2: K global kernels shared by every pair."""
+def fit_lowrank(ps: PairStats, k: int, lam_rel: float, init: Fit | None = None) -> Fit:
+    """B2: K global kernels shared by every pair. ``init`` warm-starts the bank (see ``fit_shared``)."""
     lam = lam_rel * lam_scale(ps)
-    init = fit_independent(ps, lam_rel)
-    v = _top_vectors(init.c[ps.present], None, 0, k)  # (M, K)
-    beta = init.beta
+    if init is not None and "kernels" in init.extra:
+        v = np.array(init.extra["kernels"], dtype=np.float64).T
+        beta = init.beta.copy()
+    else:
+        start = fit_independent(ps, lam_rel)
+        v = _top_vectors(start.c[ps.present], None, 0, k)  # (M, K)
+        beta = start.beta
     gl = ps.G + lam * np.eye(M)
     prev = np.inf
     it = 0
     a = np.zeros((ps.Xy.shape[0], k))
+    converged = False
     for it in range(1, MAX_ITER + 1):  # noqa: B007
         r = _resid_rhs(ps, beta)
-        lhs = np.einsum("mk,pmn,nl->pkl", v, gl, v) + EPS * np.eye(k)
+        lhs = np.einsum("mk,pmn,nl->pkl", v, gl, v, optimize=True) + EPS * np.eye(k)
         a = np.linalg.solve(lhs, np.einsum("mk,pm->pk", v, r)[..., None])[..., 0]
         a[~ps.present] = 0.0
         # V update: vec(V) column-major; c_p = V a_p
-        big = np.einsum("pk,pl,pmn->kmln", a, a, gl).reshape(k * M, k * M) + EPS * np.eye(k * M)
+        aa = (a[:, :, None] * a[:, None, :]).reshape(-1, k * k)
+        big = (aa.T @ gl.reshape(-1, M * M)).reshape(k, k, M, M).transpose(0, 2, 1, 3).reshape(k * M, k * M)
+        big = big + EPS * np.eye(k * M)
         rhs = np.einsum("pk,pm->km", a, r).reshape(k * M)
         v = np.linalg.solve(big, rhs).reshape(k, M).T
         q, rr = np.linalg.qr(v)
@@ -189,24 +234,28 @@ def fit_lowrank(ps: PairStats, k: int, lam_rel: float) -> Fit:
         beta = _beta(ps, c)
         cur = loss(ps, c, beta, lam)
         if abs(prev - cur) <= TOL * max(1.0, abs(cur)):
+            converged = True
             break
         prev = cur
     n_params = k * M + int(ps.present.sum()) * k + beta.size
-    return Fit(f"B2-K{k}", c, beta, cur, n_params, it, {"lam": lam, "kernels": v.T, "pair_coef": a})
+    extra = {"lam": lam, "kernels": v.T, "pair_coef": a, "converged": converged}
+    return Fit(f"B2-K{k}", c, beta, cur, n_params, it, extra)
 
 
 FAMILIES = ("B0", "B1", "B1d", "B2-K1", "B2-K2", "B2-K4", "B2-K8", "B3")
 
 
-def fit_family(family: str, ps: PairStats, pair_target: IntArray, n_targets: int, lam_rel: float) -> Fit:
+def fit_family(
+    family: str, ps: PairStats, pair_target: IntArray, n_targets: int, lam_rel: float, init: Fit | None = None
+) -> Fit:
     if family == "B0":
         return fit_null(ps)
     if family == "B1":
-        return fit_shared(ps, pair_target, n_targets, lam_rel)
+        return fit_shared(ps, pair_target, n_targets, lam_rel, init=init)
     if family == "B1d":
-        return fit_shared(ps, pair_target, n_targets, lam_rel, delays=True)
+        return fit_shared(ps, pair_target, n_targets, lam_rel, delays=True, init=init)
     if family.startswith("B2-K"):
-        return fit_lowrank(ps, int(family[4:]), lam_rel)
+        return fit_lowrank(ps, int(family[4:]), lam_rel, init=init)
     if family == "B3":
         return fit_independent(ps, lam_rel)
     raise ValueError(family)
