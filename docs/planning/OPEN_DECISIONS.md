@@ -21,3 +21,8 @@ Record each decision, its date and rationale in the experiment registry before a
 13. Which stimulation-history term, if any, is used, chosen from training-fold audits only?
 14. Which indicator model (impulse response, saturation) and resolvable-bandwidth estimate are frozen for [§4.5](../science/BASELINES.md), and what false-sharing rate counts as low?
 15. Which split scheme is chosen from the coverage tables, and on what grounds?
+
+## Evidence gathered so far
+
+- **Decisions 1 and 12 (2026-10-08, OW-001).** Trace-level files are publicly accessible on OSF (`raw_extracted_data/`, 113 recordings), but the OSF project declares no license, nor does the Atanas & Kim Zenodo record. pumpprobe, wormdatamodel, wormbrain and wormneuroatlas are GPL-3.0; worm-functional-connectivity has no license. Details: [ACQUISITION.md](../data/ACQUISITION.md#findings-2026-10-08). Not yet decided: whether to ask the authors for explicit terms, and how GPL reference code may be used alongside Apache-2.0 code.
+

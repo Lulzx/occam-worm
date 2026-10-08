@@ -28,7 +28,7 @@ The specification is split by topic. Section numbers (§) from the single-file s
 | Folder | Contents |
 | --- | --- |
 | [`overview/`](overview/) | Executive summary, scope and hypotheses, changelog, glossary, references |
-| [`data/`](data/) | Sources and acquisition policy, the M0 audit gate, the data contract and table schemas |
+| [`data/`](data/) | Sources and acquisition policy, the source registry and acquisition guide, the M0 audit gate, the data contract and table schemas |
 | [`science/`](science/) | Problem statement, baselines and indicator control, experiment design, equivalence, shortcuts, perturbations, embodiment |
 | [`language/`](language/) | WRL, the Worm Rule Language |
 | [`runtime/`](runtime/) | Simulation semantics |
