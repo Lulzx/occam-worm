@@ -30,7 +30,7 @@ outer_folds = 5
 inner = "group_kfold"
 inner_folds = 3
 seed = 20261008
-scheme_justification = "artifacts/audit-v1/fold_coverage.parquet"
+scheme_justification = "artifacts/audit-v2/fold_coverage.parquet"
 
 [models]
 names = ["null", "shared_kernel", "low_rank_kernels", "independent_kernels", "linear_network"]
@@ -83,12 +83,13 @@ entry: split-randi2023-wt-v1-loao
 kind: split_selection
 data_manifest: data/normalized/randi2023-wt-v1/manifest.json   # sha256 recorded in split.json
 split_manifest: data/splits/randi2023-wt-v1-loao/split.json
-evidence: artifacts/audit-v1/fold_coverage.parquet              # docs/data/AUDIT_REPORT.md
+evidence: artifacts/audit-v2/fold_coverage.parquet              # docs/data/AUDIT_REPORT.md
 candidates: [group5 (5x3), group10 (10x3), loao (113x5)]
 eligible_targets_covered: {group5: 125, group10: 127, loao: 144}
 chosen: loao
 rule: most eligible targets covered; ties broken by fewer outer folds (configs/datasets/eligibility.json)
 frozen_before_any_model_scored: true
+reaudit: audit-v2 masks stimulation-artifact volumes (-1, 0, +1); coverage is unchanged (125 / 127 / 144)
 limitations:
   - one recording per animal is assumed (animal = session)
   - acquisition batch is not exported, so leave-batch-out is not possible
