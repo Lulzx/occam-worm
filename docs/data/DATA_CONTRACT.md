@@ -93,6 +93,8 @@ life_stage: string|null
 provenance_reference: string
 ```
 
+> **Implemented (OW-013).** `data/normalized/annotations-v1/edges.parquet` has exactly these columns, one row per edge and source reconstruction. `edge_kind` is `chem`, `gap`, `putative_mod` or `nmj` (`target_neuron_id` is a muscle name for `nmj`). Gap junctions appear once per direction. `sign` is `unknown` unless the dataset states it (only Fenyves 2020 predictions), and null for gap junctions. Extra per-edge fields are in `edge_details.parquet` (same row order). See [ANNOTATIONS.md](ANNOTATIONS.md).
+
 ### `run_manifest.json`
 
 ```json
