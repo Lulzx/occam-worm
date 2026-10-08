@@ -160,6 +160,7 @@ def read_cell_info(data: bytes) -> dict[str, CellInfoRow]:
 class WangRow:
     neuron: str
     cell_class: str | None
+    class_filled_down: bool  # the class cell is merged upstream and only filled on a group's first row
     neurotransmitter_raw: str | None
     comments: str | None
 
@@ -185,12 +186,16 @@ def read_wang_nt(data: bytes) -> list[WangRow]:
         return v or None
 
     out: list[WangRow] = []
+    current: str | None = None
     for r in rows[header_at + 1 :]:
         neuron = cell(r, 2)
         if neuron is None:
             continue
         cls = cell(r, class_cols[-1]) or cell(r, class_cols[0])
-        out.append(WangRow(neuron, cls, cell(r, nt_col), cell(r, comments)))
+        filled = cls is None and current is not None
+        if cls is not None:
+            current = cls
+        out.append(WangRow(neuron, cls or current, filled, cell(r, nt_col), cell(r, comments)))
     return out
 
 
