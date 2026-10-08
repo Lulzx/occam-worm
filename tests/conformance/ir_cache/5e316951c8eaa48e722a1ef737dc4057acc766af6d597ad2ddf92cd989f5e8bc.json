@@ -1,0 +1,109 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "3aae4826e31db85deee89495823f7c4e9949a34e59f20cc034ebbb6bf28d39b8",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": 0.1,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "v",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [
+    {
+      "index": 0,
+      "name": "p0",
+      "source_name": "tau",
+      "unit": "s",
+      "value": 0.4,
+      "lower": 0.4,
+      "upper": 0.4,
+      "trainable": false,
+      "bits": 0
+    }
+  ],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 0
+      },
+      "unit": "1"
+    },
+    {
+      "id": 1,
+      "op": "stimulus",
+      "args": [],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 2,
+      "op": "param",
+      "args": [],
+      "attrs": {
+        "param": 0
+      },
+      "unit": "s"
+    },
+    {
+      "id": 3,
+      "op": "euler_leak",
+      "args": [0, 1, 2],
+      "attrs": {},
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 3
+    }
+  ],
+  "gap": null,
+  "observation": {
+    "operator": "identity_v1",
+    "register": 0,
+    "tau": null
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 81,
+    "l_ast": 81,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 0,
+    "components": {
+      "header": 15,
+      "registers": 10,
+      "parameters": 17,
+      "instructions": 35,
+      "writes": 1,
+      "gap": 1,
+      "observation": 2
+    },
+    "instruction_bits_by_op": {
+      "euler_leak": 15,
+      "param": 4,
+      "state": 3,
+      "stimulus": 8
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G1\ndt_max 1e-1\nstimulus_unit 1\nstate s0 : 1 = 0e0\nparam p0 : s = 4e-1 fixed\nlet n0 = state(s0)\nlet n1 = stimulus()\nlet n2 = param(p0)\nlet n3 = euler_leak(n0, n1, n2)\nnext s0 = n3\nobserve identity_v1(s0)\n"
+}

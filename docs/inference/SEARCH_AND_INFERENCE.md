@@ -87,6 +87,8 @@ Supported parameter-sharing strategies, from strongest to weakest:
 
 Optimize in transformed bounded domains: `tau=softplus(raw_tau)+tau_min`, `gain=softplus(raw_gain)` etc. Use multi-start fitting and gradient checks. Require posterior predictive checking when using stochastic parameter inference.
 
+**Implemented (OW-011).** `python/occamworm/fit/` optimises `lower + (upper - lower) sigmoid(raw)` (or `lower + softplus(raw)` for one-sided bounds) on the IR bounds with multi-start L-BFGS-B and exact JAX gradients, global parameters only; starts are deterministic in a seed and the optimisation budget is logged in a result manifest. Details and results: [OW-011](../planning/tickets/OW-011.md).
+
 ### 7.6 Gradient approaches
 
 **Implementation.** Parameter fitting uses a differentiable simulator written in JAX or PyTorch, run in float64 on CPU for confirmatory fits. C++ automatic-differentiation tools exist, but they add build complexity and correctness risks of their own, and hand-written adjoints are a risk the project does not need early. The Python simulator must pass the same conformance suite as the C++ reference interpreter ([§6.8](../runtime/SIM_SEMANTICS.md)). The canonical program hash, not the implementation language, identifies a model.
@@ -96,7 +98,7 @@ For smooth G1/G2 rules:
 - Implement analytical/automatic differentiation through time for short windows.
 - Use checkpointing or adjoints only if memory becomes consequential.
 - Apply gradient clipping only under explicitly recorded settings.
-- Compare gradient against finite differences on tiny tests.
+- Compare gradient against finite differences on tiny tests (implemented for the simulator in `tests/unit/sim/` and for the transformed objective in `occamworm.fit`).
 - Use truncated backprop only after quantifying truncation bias.
 
 For discrete G0/G3 operations:

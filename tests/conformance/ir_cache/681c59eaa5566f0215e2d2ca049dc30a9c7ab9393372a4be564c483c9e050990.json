@@ -1,0 +1,187 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "5d98d636a83091233ca938fc9519bb6c8579ac468051856891e44206e9606809",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": 1,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "out",
+      "unit": "1",
+      "init": 0
+    },
+    {
+      "index": 1,
+      "name": "s1",
+      "source_name": "w",
+      "unit": "1",
+      "init": 0
+    },
+    {
+      "index": 2,
+      "name": "s2",
+      "source_name": "y",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [
+    {
+      "index": 0,
+      "name": "p0",
+      "source_name": "tau",
+      "unit": "s",
+      "value": 1,
+      "lower": 1,
+      "upper": 1,
+      "trainable": false,
+      "bits": 0
+    }
+  ],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 0
+      },
+      "unit": "1"
+    },
+    {
+      "id": 1,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 1
+      },
+      "unit": "1"
+    },
+    {
+      "id": 2,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 2
+      },
+      "unit": "1"
+    },
+    {
+      "id": 3,
+      "op": "add",
+      "args": [1, 2],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 4,
+      "op": "param",
+      "args": [],
+      "attrs": {
+        "param": 0
+      },
+      "unit": "s"
+    },
+    {
+      "id": 5,
+      "op": "euler_leak",
+      "args": [0, 3, 4],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 6,
+      "op": "stimulus",
+      "args": [],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 7,
+      "op": "sigmoid",
+      "args": [6],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 8,
+      "op": "euler_leak",
+      "args": [1, 7, 4],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 9,
+      "op": "tanh",
+      "args": [6],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 10,
+      "op": "euler_leak",
+      "args": [2, 9, 4],
+      "attrs": {},
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 5
+    },
+    {
+      "register": 1,
+      "value": 8
+    },
+    {
+      "register": 2,
+      "value": 10
+    }
+  ],
+  "gap": null,
+  "observation": {
+    "operator": "identity_v1",
+    "register": 0,
+    "tau": null
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 187,
+    "l_ast": 187,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 0,
+    "components": {
+      "header": 13,
+      "registers": 30,
+      "parameters": 15,
+      "instructions": 117,
+      "writes": 9,
+      "gap": 1,
+      "observation": 2
+    },
+    "instruction_bits_by_op": {
+      "add": 8,
+      "euler_leak": 57,
+      "param": 4,
+      "sigmoid": 9,
+      "state": 13,
+      "stimulus": 8,
+      "tanh": 11
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G1\ndt_max 1e0\nstimulus_unit 1\nstate s0 : 1 = 0e0\nstate s1 : 1 = 0e0\nstate s2 : 1 = 0e0\nparam p0 : s = 1e0 fixed\nlet n0 = state(s0)\nlet n1 = state(s1)\nlet n2 = state(s2)\nlet n3 = add(n1, n2)\nlet n4 = param(p0)\nlet n5 = euler_leak(n0, n3, n4)\nlet n6 = stimulus()\nlet n7 = sigmoid(n6)\nlet n8 = euler_leak(n1, n7, n4)\nlet n9 = tanh(n6)\nlet n10 = euler_leak(n2, n9, n4)\nnext s0 = n5\nnext s1 = n8\nnext s2 = n10\nobserve identity_v1(s0)\n"
+}

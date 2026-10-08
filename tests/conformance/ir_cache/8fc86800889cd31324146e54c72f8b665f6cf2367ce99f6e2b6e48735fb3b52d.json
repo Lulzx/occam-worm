@@ -1,0 +1,74 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "684b1d9f484a567f11e9efb70b9a7b3f078cab286ce16bdf5f25bf01612ba7dc",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": null,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "v",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 0
+      },
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 0
+    }
+  ],
+  "gap": {
+    "register": 0,
+    "scale_param": null
+  },
+  "observation": {
+    "operator": "identity_v1",
+    "register": 0,
+    "tau": null
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 29,
+    "l_ast": 29,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 0,
+    "components": {
+      "header": 6,
+      "registers": 10,
+      "parameters": 1,
+      "instructions": 6,
+      "writes": 1,
+      "gap": 3,
+      "observation": 2
+    },
+    "instruction_bits_by_op": {
+      "state": 3
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G1\nstimulus_unit 1\nstate s0 : 1 = 0e0\nlet n0 = state(s0)\nnext s0 = n0\ngap s0\nobserve identity_v1(s0)\n"
+}

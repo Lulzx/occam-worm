@@ -1,0 +1,218 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "c73e6e6cdd1d0c6cfbce172238cd413def16a18fa13bc599b69298ff5bffcf19",
+  "rule": "unnamed",
+  "tier": "G1",
+  "dt_max": null,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "v",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [
+    {
+      "index": 0,
+      "name": "p0",
+      "source_name": "k",
+      "unit": "1",
+      "value": 1.5,
+      "lower": 0,
+      "upper": 4,
+      "trainable": true,
+      "bits": 8
+    },
+    {
+      "index": 1,
+      "name": "p1",
+      "source_name": "tau",
+      "unit": "s",
+      "value": 0.3,
+      "lower": 0.1,
+      "upper": 2,
+      "trainable": true,
+      "bits": 8
+    }
+  ],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "state",
+      "args": [],
+      "attrs": {
+        "register": 0
+      },
+      "unit": "1"
+    },
+    {
+      "id": 1,
+      "op": "sum_in",
+      "args": [],
+      "attrs": {
+        "register": 0,
+        "select": "exc"
+      },
+      "unit": "1"
+    },
+    {
+      "id": 2,
+      "op": "stimulus",
+      "args": [],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 3,
+      "op": "type_mask",
+      "args": [],
+      "attrs": {
+        "type": "x"
+      },
+      "unit": "1"
+    },
+    {
+      "id": 4,
+      "op": "const",
+      "args": [],
+      "attrs": {
+        "value": 0.25
+      },
+      "unit": "1"
+    },
+    {
+      "id": 5,
+      "op": "delay",
+      "args": [],
+      "attrs": {
+        "register": 0,
+        "ticks": 2
+      },
+      "unit": "1"
+    },
+    {
+      "id": 6,
+      "op": "mul",
+      "args": [4, 5],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 7,
+      "op": "sum_in",
+      "args": [],
+      "attrs": {
+        "register": 0,
+        "select": "inh"
+      },
+      "unit": "1"
+    },
+    {
+      "id": 8,
+      "op": "neg",
+      "args": [7],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 9,
+      "op": "add",
+      "args": [1, 2, 3, 6, 8],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 10,
+      "op": "tanh",
+      "args": [9],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 11,
+      "op": "param",
+      "args": [],
+      "attrs": {
+        "param": 1
+      },
+      "unit": "s"
+    },
+    {
+      "id": 12,
+      "op": "leaky_integrate",
+      "args": [0, 10, 11],
+      "attrs": {},
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 12
+    }
+  ],
+  "gap": {
+    "register": 0,
+    "scale_param": 0
+  },
+  "observation": {
+    "operator": "calcium_linear_v1",
+    "register": 0,
+    "tau": {
+      "param": 1
+    }
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 236,
+    "l_ast": 227,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 9,
+    "components": {
+      "header": 6,
+      "registers": 10,
+      "parameters": 41,
+      "instructions": 168,
+      "writes": 1,
+      "gap": 4,
+      "observation": 6
+    },
+    "instruction_bits_by_op": {
+      "add": 29,
+      "const": 19,
+      "delay": 12,
+      "leaky_integrate": 19,
+      "mul": 8,
+      "neg": 9,
+      "param": 6,
+      "state": 3,
+      "stimulus": 8,
+      "sum_in": 22,
+      "tanh": 9,
+      "type_mask": 17
+    }
+  },
+  "l_params": {
+    "total_bits": 16,
+    "per_parameter": [
+      {
+        "name": "p0",
+        "bits": 8
+      },
+      {
+        "name": "p1",
+        "bits": 8
+      }
+    ]
+  },
+  "canonical_source": "wrl 0.1\ntier G1\nstimulus_unit 1\nstate s0 : 1 = 0e0\nparam p0 : 1 in [0e0, 4e0] trainable bits 8\nparam p1 : s in [1e-1, 2e0] trainable bits 8\nlet n0 = state(s0)\nlet n1 = sum_in(s0, exc)\nlet n2 = stimulus()\nlet n3 = type_mask(x)\nlet n4 = 2.5e-1[1]\nlet n5 = delay(s0, 2)\nlet n6 = mul(n4, n5)\nlet n7 = sum_in(s0, inh)\nlet n8 = neg(n7)\nlet n9 = add(n1, n2, n3, n6, n8)\nlet n10 = tanh(n9)\nlet n11 = param(p1)\nlet n12 = leaky_integrate(n0, n10, n11)\nnext s0 = n12\ngap s0 scale p0\nobserve calcium_linear_v1(s0, p1)\n"
+}

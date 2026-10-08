@@ -2,7 +2,7 @@
 
 Searches a small typed language of local neural update rules, runs candidates on the *C. elegans* connectome, and keeps only rules that predict causal responses in animals they never saw. Brevity is a tie-breaker, never a substitute for held-out accuracy.
 
-**Status:** spec v0.4.1. Done: data acquisition, trial import, M0 audit (**go**), animal-wise splits, annotation mapping, the C++26 rule toolchain, reference interpreter and enumerator (OW-001–004, OW-008–010, OW-013). In progress: scoring and baselines (OW-005–007), differentiable simulator (OW-009).
+**Status:** spec v0.4.1. Done: data acquisition, trial import, M0 audit (**go**), animal-wise splits, annotation mapping, the C++26 rule toolchain, reference interpreter and enumerator, Python scalar and JAX simulators, parameter fitting (OW-001–004, OW-008–011, OW-013). In progress: scoring and baselines (OW-005–007).
 
 ## Quickstart
 

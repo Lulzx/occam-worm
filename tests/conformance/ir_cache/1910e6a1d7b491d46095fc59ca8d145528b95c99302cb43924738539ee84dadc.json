@@ -1,0 +1,98 @@
+{
+  "schema": "occamworm.wrl.ir/0.1",
+  "grammar_version": "0.1",
+  "bit_code_version": 1,
+  "compiler_build": "ow 0.1.0; Clang 23.1.2; C++26; Release; fp-contract=off",
+  "program_hash": "f31c7b8174c912d72dbf3bf2daabbc9719a23529d1ed1597be38fc4f7883fd4e",
+  "rule": "unnamed",
+  "tier": "G0",
+  "dt_max": null,
+  "stimulus_unit": "1",
+  "registers": [
+    {
+      "index": 0,
+      "name": "s0",
+      "source_name": "s",
+      "unit": "1",
+      "init": 0
+    }
+  ],
+  "parameters": [],
+  "instructions": [
+    {
+      "id": 0,
+      "op": "stimulus",
+      "args": [],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 1,
+      "op": "count_in",
+      "args": [],
+      "attrs": {
+        "register": 0,
+        "k": 1
+      },
+      "unit": "1"
+    },
+    {
+      "id": 2,
+      "op": "add",
+      "args": [0, 1],
+      "attrs": {},
+      "unit": "1"
+    },
+    {
+      "id": 3,
+      "op": "lut",
+      "args": [2],
+      "attrs": {
+        "table": [0, 1]
+      },
+      "unit": "1"
+    }
+  ],
+  "writes": [
+    {
+      "register": 0,
+      "value": 3
+    }
+  ],
+  "gap": null,
+  "observation": {
+    "operator": "identity_v1",
+    "register": 0,
+    "tau": null
+  },
+  "eliminated": {
+    "registers": [],
+    "parameters": []
+  },
+  "l_struct": {
+    "total_bits": 80,
+    "l_ast": 63,
+    "l_topology_overrides": 0,
+    "l_type_dispatch": 17,
+    "components": {
+      "header": 6,
+      "registers": 10,
+      "parameters": 1,
+      "instructions": 59,
+      "writes": 1,
+      "gap": 1,
+      "observation": 2
+    },
+    "instruction_bits_by_op": {
+      "add": 8,
+      "count_in": 12,
+      "lut": 26,
+      "stimulus": 8
+    }
+  },
+  "l_params": {
+    "total_bits": 0,
+    "per_parameter": []
+  },
+  "canonical_source": "wrl 0.1\ntier G0\nstimulus_unit 1\nstate s0 : 1 = 0e0\nlet n0 = stimulus()\nlet n1 = count_in(s0, 1)\nlet n2 = add(n0, n1)\nlet n3 = lut(n2, [0e0, 1e0])\nnext s0 = n3\nobserve identity_v1(s0)\n"
+}
