@@ -1,6 +1,6 @@
 # Data sources and acquisition policy
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §2.1–§2.2
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §2.1–§2.2
 
 ## 2. Prior work and source datasets
 

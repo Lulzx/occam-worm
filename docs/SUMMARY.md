@@ -12,7 +12,7 @@ Occam's Worm searches a small typed language of local neural update rules, runs 
 
 **Name.** Prefer the most compact program, but only among programs that predict held-out interventions. Brevity is a prior and a tie-breaker; it never substitutes for causal accuracy.
 
-**Status.** Version 0.4 research design; not implemented. Python (JAX or PyTorch) handles data, baselines, differentiable simulation and fitting. C++20 handles the rule toolchain, enumeration, reference interpreter and CLI.
+**Status.** Version 0.4.1 research design; not implemented. Python (JAX or PyTorch) handles data, baselines, differentiable simulation and fitting. C++26 handles the rule toolchain, enumeration, reference interpreter and CLI.
 
 **Claimed novelty.** Not that simple rules make complex patterns, or that a virtual worm can crawl. It is the combination of automated rule search, anatomical constraints, trial-level causal validation, explicit equivalence classes and experiment selection.
 
@@ -342,7 +342,7 @@ Genotype and body tests come only after the neural model passes held-out tests, 
 
 ## 12. Software architecture
 
-C++20 owns the rule toolchain, enumeration, reference interpreter and CLI; Python owns data, baselines, differentiable simulation, fitting and reporting; the forward pass moves to C++ only if profiling shows Python rollouts limit search.
+C++26 owns the rule toolchain, enumeration, reference interpreter and CLI; Python owns data, baselines, differentiable simulation, fitting and reporting; the forward pass moves to C++ only if profiling shows Python rollouts limit search.
 
 **Principles.** Local-first and offline; separate APIs for ingestion, compilation, simulation, inference, selection, evaluation and visualization; raw data and frozen test targets are immutable; every output traces to source version, split, model hash, code version and config; no silent filtering or fallback; each added modality must improve a declared endpoint; no GPU until profiling demands it.
 
@@ -366,7 +366,7 @@ C++20 owns the rule toolchain, enumeration, reference interpreter and CLI; Pytho
 occamworm/
 ├── CMakeLists.txt, CMakePresets.json, vcpkg.json, pyproject.toml
 ├── docs/            SPEC, DATA_CONTRACT, GRAMMAR, SIM_SEMANTICS, BENCHMARK, REPRODUCIBILITY
-├── libs/            C++20, namespace occamworm::
+├── libs/            C++26, namespace occamworm::
 │   ├── ow-core  ow-ir  ow-sim  ow-sim-fast  ow-observe  ow-likelihood
 │   └── ow-search  ow-infer  ow-experiments  ow-equivalence  ow-data  ow-bindings  ow-cli
 ├── python/occamworm/
@@ -398,7 +398,7 @@ occamworm experiments rank --models artifacts/eval-g1-v1/models/ --menu configs/
 occamworm report build --run artifacts/eval-g1-v1/
 ```
 
-**C++ toolchain.** C++20 with CMake presets; dependencies pinned in a vcpkg manifest; Python extension built by scikit-build-core with nanobind bindings and explicit array shape and dtype checks. The reference build uses float64 with `-ffast-math` and floating-point contraction off and fixed reduction order. No output may depend on unordered-container order, pointers or thread timing. RAII and value types, no owning raw pointers, bounds-checked reference interpreter. Libraries: GoogleTest, RapidCheck, yaml-cpp, nlohmann/json and a vetted SHA-256. Pinned Clang for reference builds, plus GCC in CI.
+**C++ toolchain.** C++26 with CMake presets; dependencies pinned in a vcpkg manifest; Python extension built by scikit-build-core with nanobind bindings and explicit array shape and dtype checks. The reference build uses float64 with `-ffast-math` and floating-point contraction off and fixed reduction order. No output may depend on unordered-container order, pointers or thread timing. RAII and value types, no owning raw pointers, bounds-checked reference interpreter. Libraries: GoogleTest, RapidCheck, yaml-cpp, nlohmann/json and a vetted SHA-256. Pinned Clang for reference builds, plus GCC in CI.
 
 **CI on every pull request.** Warnings-as-errors builds on Clang and GCC; clang-format and clang-tidy; C++ unit and property tests under AddressSanitizer and UndefinedBehaviorSanitizer; a short WRL parser fuzz run; Python typing and tests; small synthetic simulation and conformance; leakage assertions; determinism and report checksums; license scan of committed assets. Full synthetic recovery runs nightly.
 

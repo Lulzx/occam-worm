@@ -1,6 +1,6 @@
 # Scientific motivation, scope and hypotheses
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §1
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §1
 
 ## 1. Scientific motivation and scope
 

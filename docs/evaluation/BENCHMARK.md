@@ -1,6 +1,6 @@
 # Benchmark definition
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md)
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md)
 
 **Status: not frozen.** This file becomes the frozen animal-wise benchmark at the end of milestone M1 ([roadmap](../planning/ROADMAP.md)). Until then it lists what the frozen version must pin down. Every item comes from elsewhere in the specification; nothing here adds a requirement.
 

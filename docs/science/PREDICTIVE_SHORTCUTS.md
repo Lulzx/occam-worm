@@ -1,6 +1,6 @@
 # Predictive shortcuts
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §10
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §10
 
 ## 10. Predictive shortcuts: test rather than assume
 

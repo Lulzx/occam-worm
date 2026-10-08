@@ -1,6 +1,10 @@
 # Specification changelog
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: "Changes in" sections
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: "Changes in" sections
+
+## Changes in 0.4.1 (2026-10-08)
+
+1. **C++26 replaces C++20** for the rule-language toolchain, enumeration, reference interpreter, CLI and any optimized runtime ([§14.8](../engineering/REPRODUCIBILITY.md), [§14.2](../engineering/ARCHITECTURE.md)). A feature allowlist restricts code to what both pinned compilers implement, and a new risk entry covers uneven compiler support ([§19](../planning/RISKS.md)). No methods, gates, metrics or claims changed.
 
 ## Changes in 0.4.0
 

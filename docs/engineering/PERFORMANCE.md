@@ -1,6 +1,6 @@
 # Computational design and performance
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §18
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §18
 
 Initial performance targets (engineering goals, not measured claims) are in [§6.9](../runtime/SIM_SEMANTICS.md).
 

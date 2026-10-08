@@ -1,6 +1,6 @@
 # Implementation tickets
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../../README.md) · Source: §21
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../../README.md) · Source: §21
 
 Each ticket has an objectively checkable definition of done. Milestone assignments follow the task lists in the [roadmap](../ROADMAP.md).
 

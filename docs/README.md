@@ -4,11 +4,11 @@
 
 | | |
 | --- | --- |
-| Version | 0.4.0 (research design; not an implemented system; supersedes 0.3.0) |
+| Version | 0.4.1 (research design; not an implemented system; supersedes 0.4.0) |
 | Date | 2026-10-08 |
 | Status | Proposed / falsifiable research program |
 | Primary organism | adult hermaphrodite *Caenorhabditis elegans* |
-| Implementation | Python (JAX or PyTorch) differentiable simulator and parameter fitting; C++20 for the rule-language toolchain, program enumeration, deterministic reference interpreter and CLI; optional Apple Metal accelerator (via metal-cpp) only after profiling |
+| Implementation | Python (JAX or PyTorch) differentiable simulator and parameter fitting; C++26 for the rule-language toolchain, program enumeration, deterministic reference interpreter and CLI; optional Apple Metal accelerator (via metal-cpp) only after profiling |
 | Codename | `occamworm` |
 | License | [Apache 2.0](../LICENSE) for original code; upstream data and simulators keep their own licenses (see [open decision 12](planning/OPEN_DECISIONS.md)) |
 
@@ -28,7 +28,7 @@ The specification is split by topic. Section numbers (§) from the single-file s
 | Folder | Contents |
 | --- | --- |
 | [`overview/`](overview/) | Executive summary, scope and hypotheses, changelog, glossary, references |
-| [`data/`](data/) | Sources and acquisition policy, the source registry and acquisition guide, the M0 audit gate, the data contract and table schemas |
+| [`data/`](data/) | Sources and acquisition policy, the source registry and acquisition guide, the Randi 2023 import, the M0 audit gate, the data contract and table schemas |
 | [`science/`](science/) | Problem statement, baselines and indicator control, experiment design, equivalence, shortcuts, perturbations, embodiment |
 | [`language/`](language/) | WRL, the Worm Rule Language |
 | [`runtime/`](runtime/) | Simulation semantics |

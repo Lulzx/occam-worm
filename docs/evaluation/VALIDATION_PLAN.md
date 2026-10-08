@@ -1,6 +1,6 @@
 # Statistical evaluation protocol
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §11
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §11
 
 ## 11. Statistical evaluation protocol
 

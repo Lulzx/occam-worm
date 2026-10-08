@@ -1,6 +1,6 @@
 # M0 data-audit gate
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §2.3
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §2.3
 
 ## 2.3 Immediate data-audit gate
 

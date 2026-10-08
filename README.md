@@ -22,7 +22,7 @@ The first scientific release (M0–M1, tickets OW-001 to OW-007) does not need t
 ```text
 occam-worm/
 ├── docs/        specification, split by topic (start at docs/README.md)
-├── libs/        C++20 libraries, namespace occamworm:: (ow-core, ow-ir, ow-sim, ...)
+├── libs/        C++26 libraries, namespace occamworm:: (ow-core, ow-ir, ow-sim, ...)
 ├── python/      the occamworm package: importers, baselines, sim, fit, analysis, plotting
 ├── configs/     datasets, splits, rules, experiments, searches
 ├── tests/       synthetic_truth, conformance, adversarial, leakage, fuzz, integration

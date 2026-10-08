@@ -1,6 +1,6 @@
 # Publication strategy and claims discipline
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §20, §23, Appendix C
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §20, §23, Appendix C
 
 ## 20. Publication strategy, scientific claims and negative results
 

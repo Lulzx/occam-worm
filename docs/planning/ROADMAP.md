@@ -1,6 +1,6 @@
 # Roadmap and acceptance gates
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §15
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §15
 
 Implementation tickets for these milestones are in [tickets/](tickets/README.md).
 

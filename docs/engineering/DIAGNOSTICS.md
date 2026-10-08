@@ -1,6 +1,6 @@
 # Instrumentation, diagnostics and visualization
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §17.1–§17.3
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §17.1–§17.3
 
 ## 17. Instrumentation, diagnostics and visualization
 

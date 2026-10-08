@@ -1,6 +1,6 @@
 # Baselines, shared-timescale test and indicator-kinetics control
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §4
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §4
 
 ## 4. Baseline first: shared-timescale experiment
 

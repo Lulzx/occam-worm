@@ -1,6 +1,6 @@
 # Data contract: trials, responses and table schemas
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §2.4, §14.4
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §2.4, §14.4
 
 ## 2.4 Trial inclusion and response definition
 

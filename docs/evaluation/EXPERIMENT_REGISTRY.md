@@ -1,6 +1,6 @@
 # Experiment registry and configuration
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §14.6, §17.4
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §14.6, §17.4
 
 Concrete configuration lives in [`configs/experiments/`](../../configs/experiments/); registry entries are immutable once a run is frozen.
 

@@ -1,6 +1,6 @@
 # WRL: the Worm Rule Language
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §5
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §5
 
 ## 5. The Rule Language (`WRL`)
 

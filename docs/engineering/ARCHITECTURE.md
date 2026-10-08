@@ -1,6 +1,6 @@
 # Software architecture
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §14.1–§14.3, §14.5
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §14.1–§14.3, §14.5
 
 ## 14. Software architecture and repository design
 
@@ -38,7 +38,7 @@ occamworm/
 │   ├── VALIDATION_PLAN.md
 │   ├── REPRODUCIBILITY.md
 │   └── EXPERIMENT_REGISTRY.md
-├── libs/                            # C++20 libraries, namespace occamworm::
+├── libs/                            # C++26 libraries, namespace occamworm::
 │   ├── ow-core/                    # typed graphs, units, state definitions
 │   ├── ow-ir/                      # WRL AST, parser, canonical IR, hash, bit-cost
 │   ├── ow-sim/                     # scalar deterministic reference interpreter (oracle)
@@ -126,7 +126,7 @@ C++ handles the rule-language toolchain (parsing, type and unit checks, canonica
 #### Core C++ interfaces
 
 ```cpp
-// Illustrative C++20 interfaces; not compiled code.
+// Illustrative C++26 interfaces; not compiled code.
 namespace occamworm {
 
 class NeuralProgram {

@@ -1,6 +1,6 @@
 # Risks, failure modes and anti-patterns
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §19
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §19
 
 ## 19. Risks, failure modes and mitigation
 
@@ -23,6 +23,7 @@
 | Indicator-kinetics confound | A shared sensor filter or limited resolvable bandwidth can masquerade as shared neural timescales | Separate indicator stage, resolvable-bandwidth report, synthetic false-sharing control ([§4.5](../science/BASELINES.md)) |
 | Within-recording carryover | Sequential stimulations change animal state; order effects mimic mechanism or noise | Stimulation-history audit, history terms, order-shuffle control |
 | Gradients in C++ | Hand-built or tool-generated gradients add build complexity and are easy to get wrong | Differentiable Python simulator for fitting; C++ for toolchain and reference interpreter |
+| Uneven C++26 compiler support | Code that builds on one compiler fails on the other, or a feature behaves differently | Feature allowlist in REPRODUCIBILITY.md; two pinned compilers in CI; no feature admitted until both implement it |
 | Memory and undefined-behavior bugs in C++ | Silent corruption or nondeterminism can masquerade as scientific results | Sanitizers and fuzzing in CI, warnings as errors, bounds-checked reference interpreter, two-compiler builds |
 | Large research scope | Full worm physics delays a decisive result | Data-first milestones with hard go/no-go gates |
 

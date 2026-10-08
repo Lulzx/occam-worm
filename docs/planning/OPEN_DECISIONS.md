@@ -1,6 +1,6 @@
 # Open decisions to freeze before confirmatory evaluation
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: Appendix B
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: Appendix B
 
 Record each decision, its date and rationale in the experiment registry before any outer fold is scored.
 

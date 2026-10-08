@@ -1,6 +1,6 @@
-# libs/ — C++20 libraries
+# libs/ — C++26 libraries
 
-C++20 libraries in namespace `occamworm::`. C++ owns the rule toolchain, enumeration, the reference interpreter and the CLI; Python owns data, baselines, differentiable simulation and fitting.
+C++26 libraries in namespace `occamworm::`. C++ owns the rule toolchain, enumeration, the reference interpreter and the CLI; Python owns data, baselines, differentiable simulation and fitting.
 
 | Library | Purpose |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Embodied worm extension
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: §13
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: §13
 
 ## 13. Embodied worm extension
 

@@ -1,6 +1,6 @@
 # Executive summary
 
-> Part of the **Occam's Worm specification v0.4.0** · [Spec index](../README.md) · Source: front matter and executive summary
+> Part of the **Occam's Worm specification v0.4.1** · [Spec index](../README.md) · Source: front matter and executive summary
 
 > **One-sentence goal:** Discover compact, interpretable, biologically constrained computational programs that reproduce and **predict** causal neural responses in *C. elegans*—and quantify exactly which microscopic details must be preserved for progressively stronger forms of neural emulation.
 
