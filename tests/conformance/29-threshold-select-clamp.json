@@ -1,0 +1,149 @@
+{
+  "name": "threshold-select-clamp",
+  "description": "threshold, select, clamp, min, max, abs and relu on a stimulus ramp u = -2, -1.5, ..., 1.5.",
+  "derivation": "dt = tau = 1, so each register is its target one tick later: thr = [u >= 0.5], sel = |u| (select on [u >= 0], including the boundary u = 0), clp = clamp(u,-1,1), mn = min(u,0.5), mx = max(u,-0.5), ab = |u|, rl = max(u,0); out(t+1) is the sum of the others at tick t. All values are dyadic (exact).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "state thr : 1 = 0",
+      "state sel : 1 = 0",
+      "state clp : 1 = 0",
+      "state mn : 1 = 0",
+      "state mx : 1 = 0",
+      "state ab : 1 = 0",
+      "state rl : 1 = 0",
+      "state out : 1 = 0",
+      "next thr = euler_leak(thr, threshold(u, 0.5), tau)",
+      "next sel = euler_leak(sel, select(threshold(u, 0), u, -u), tau)",
+      "next clp = euler_leak(clp, clamp(u, -1, 1), tau)",
+      "next mn = euler_leak(mn, min(u, 0.5), tau)",
+      "next mx = euler_leak(mx, max(u, -0.5), tau)",
+      "next ab = euler_leak(ab, abs(u), tau)",
+      "next rl = euler_leak(rl, relu(u), tau)",
+      "next out = euler_leak(out, thr + sel + clp + mn + mx + ab + rl, tau)",
+      "observe identity_v1(out)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 8,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 8, "amplitude": -2.5},
+      {"neuron": "A", "start": 0, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 1, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 2, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 3, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 4, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 5, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 6, "end": 8, "amplitude": 0.5},
+      {"neuron": "A", "start": 7, "end": 8, "amplitude": 0.5}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "thr": [
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [1.0],
+          [1.0],
+          [1.0]
+        ],
+        "sel": [
+          [0.0],
+          [2.0],
+          [1.5],
+          [1.0],
+          [0.5],
+          [0.0],
+          [0.5],
+          [1.0],
+          [1.5]
+        ],
+        "clp": [
+          [0.0],
+          [-1.0],
+          [-1.0],
+          [-1.0],
+          [-0.5],
+          [0.0],
+          [0.5],
+          [1.0],
+          [1.0]
+        ],
+        "mn": [
+          [0.0],
+          [-2.0],
+          [-1.5],
+          [-1.0],
+          [-0.5],
+          [0.0],
+          [0.5],
+          [0.5],
+          [0.5]
+        ],
+        "mx": [
+          [0.0],
+          [-0.5],
+          [-0.5],
+          [-0.5],
+          [-0.5],
+          [0.0],
+          [0.5],
+          [1.0],
+          [1.5]
+        ],
+        "ab": [
+          [0.0],
+          [2.0],
+          [1.5],
+          [1.0],
+          [0.5],
+          [0.0],
+          [0.5],
+          [1.0],
+          [1.5]
+        ],
+        "rl": [
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.0],
+          [0.5],
+          [1.0],
+          [1.5]
+        ],
+        "out": [
+          [0.0],
+          [0.0],
+          [0.5],
+          [0.0],
+          [-0.5],
+          [-0.5],
+          [0.0],
+          [4.0],
+          [6.5]
+        ]
+      }
+    }
+  }
+}

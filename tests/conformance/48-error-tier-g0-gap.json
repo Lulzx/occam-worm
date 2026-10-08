@@ -1,0 +1,24 @@
+{
+  "name": "error-tier-g0-gap",
+  "description": "gap is not available in G0.",
+  "derivation": "The program is rejected at compile time; section 2 of the language document assigns this defect to E_TIER.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "gap s",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 1,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ]
+    }
+  },
+  "check": {"type": "compile_error", "code": "E_TIER"}
+}

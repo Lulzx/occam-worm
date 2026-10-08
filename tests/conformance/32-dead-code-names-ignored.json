@@ -1,0 +1,57 @@
+{
+  "name": "dead-code-names-ignored",
+  "description": "Registers and parameters removed as dead code may still be named in the input and are ignored.",
+  "derivation": "Only v reaches the observation; d and `unused` are eliminated. Their input overrides are accepted and have no effect, so v_n = 1 - exp(-n dt / tau) with tau = 0.3.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "state d : 1 = 0.5",
+      "param tau : s = 0.3 fixed",
+      "param unused : 1 = 1 in [0, 2] trainable bits 4",
+      "next v = leaky_integrate(v, stimulus, tau)",
+      "next d = d + stimulus * unused",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 10,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 10, "amplitude": 1.0}
+    ],
+    "params": {"unused": 1.5},
+    "initial_state": {
+      "d": {"A": 2.0}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0],
+          [0.28346868942621073],
+          [0.486582880967408],
+          [0.6321205588285578],
+          [0.7364028618842733],
+          [0.8111243971624382],
+          [0.8646647167633874],
+          [0.9030280321355949],
+          [0.9305165487771985],
+          [0.950212931632136],
+          [0.9643260066527476]
+        ]
+      }
+    }
+  }
+}

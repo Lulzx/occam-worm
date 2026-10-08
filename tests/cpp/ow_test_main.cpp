@@ -1,0 +1,24 @@
+#include <exception>
+#include <iostream>
+
+#include "ow_test.hpp"
+
+int main() {
+    using namespace occamworm::test;
+    int unexpected = 0;
+    for (const TestCase& test_case : registry()) {
+        const int before = failure_count();
+        const int unexpected_before = unexpected;
+        try {
+            test_case.function();
+        } catch (const std::exception& error) {
+            ++unexpected;
+            std::cerr << test_case.name << ": unexpected exception: " << error.what() << "\n";
+        }
+        const bool passed = failure_count() == before && unexpected == unexpected_before;
+        std::cout << (passed ? "[ ok ] " : "[FAIL] ") << test_case.name << "\n";
+    }
+    std::cout << registry().size() << " tests, " << failure_count() << " failed checks, " << unexpected
+              << " unexpected exceptions\n";
+    return (failure_count() == 0 && unexpected == 0) ? 0 : 1;
+}

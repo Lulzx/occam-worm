@@ -1,0 +1,53 @@
+{
+  "name": "g0-lut-clamp",
+  "description": "lut index = floor(x) clamped to [0, n-1], with negative, fractional and oversized arguments.",
+  "derivation": "next s = lut(s + u, [0,2,1,3]). A (u = 1): 0 -> lut(1) = 2 -> lut(3) = 3 -> lut(4) clamps to 3. B (u = -5 once): lut(-5) -> 0. C (u = 1 once): 2 -> lut(2) = 1 -> lut(1) = 2 -> oscillates. D (u = 1.5): floor keeps index 1, then 3.5 -> 3. E (u = -0.5): floor = -1 -> index 0.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "next s = lut(add(s, stimulus), [0, 2, 1, 3])",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 6,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"},
+        {"id": "E"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 6, "amplitude": 1.0},
+      {"neuron": "B", "start": 0, "end": 1, "amplitude": -5.0},
+      {"neuron": "C", "start": 0, "end": 1, "amplitude": 1.0},
+      {"neuron": "D", "start": 0, "end": 6, "amplitude": 1.5},
+      {"neuron": "E", "start": 0, "end": 6, "amplitude": -0.5}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "s": [
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [2.0, 0.0, 2.0, 2.0, 0.0],
+          [3.0, 0.0, 1.0, 3.0, 0.0],
+          [3.0, 0.0, 2.0, 3.0, 0.0],
+          [3.0, 0.0, 1.0, 3.0, 0.0],
+          [3.0, 0.0, 2.0, 3.0, 0.0],
+          [3.0, 0.0, 1.0, 3.0, 0.0]
+        ]
+      }
+    }
+  }
+}

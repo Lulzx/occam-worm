@@ -1,0 +1,87 @@
+{
+  "name": "adaptation-register",
+  "description": "Two registers: v' = u - 1.5 h and h' = relu(v) with simultaneous (old-value) updates.",
+  "derivation": "dt = tau = 1: v(t+1) = 1 - 1.5 h(t) and h(t+1) = relu(v(t)) use only tick-t values. Hand iteration from (0,0): v = 0, 1, 1, -.5, -.5, 1, 1, ..., h = 0, 0, 1, 1, 0, 0, 1, ... (relu clips the negative v).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "state h : 1 = 0",
+      "param tau : s = 1 fixed",
+      "param adapt : 1 = 1.5 fixed",
+      "input u = stimulus",
+      "next v = euler_leak(v, u - adapt * h, tau)",
+      "next h = euler_leak(h, relu(v), tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 12,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 12, "amplitude": 1.0}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0],
+          [1.0],
+          [1.0],
+          [-0.5],
+          [-0.5],
+          [1.0],
+          [1.0],
+          [-0.5],
+          [-0.5],
+          [1.0],
+          [1.0],
+          [-0.5],
+          [-0.5]
+        ],
+        "h": [
+          [0.0],
+          [0.0],
+          [1.0],
+          [1.0],
+          [0.0],
+          [0.0],
+          [1.0],
+          [1.0],
+          [0.0],
+          [0.0],
+          [1.0],
+          [1.0],
+          [0.0]
+        ]
+      },
+      "observation": [
+        [0.0],
+        [1.0],
+        [1.0],
+        [-0.5],
+        [-0.5],
+        [1.0],
+        [1.0],
+        [-0.5],
+        [-0.5],
+        [1.0],
+        [1.0],
+        [-0.5],
+        [-0.5]
+      ]
+    }
+  }
+}

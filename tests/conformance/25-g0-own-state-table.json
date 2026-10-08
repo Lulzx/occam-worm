@@ -1,0 +1,61 @@
+{
+  "name": "g0-own-state-table",
+  "description": "Path of 5 cells; the next state is a table lookup on 3 * own state + number of live in-neighbours.",
+  "derivation": "idx = 3 s + count is looked up in [0,0,1,0,1,1]: (s,count) = (0,0)->0, (0,1)->0, (0,2)->1, (1,0)->0, (1,1)->1, (1,2)->1. End cells have one neighbour. Eight generations are iterated by hand from 0 1 0 0 1.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "next s = lut(add(mul(s, 3), count_in(s, 1)), [0, 0, 1, 0, 1, 1])",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 8,
+    "graph": {
+      "neurons": [
+        {"id": "C0"},
+        {"id": "C1"},
+        {"id": "C2"},
+        {"id": "C3"},
+        {"id": "C4"}
+      ],
+      "chemical": [
+        {"pre": "C0", "post": "C1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C1", "post": "C0", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C1", "post": "C2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C2", "post": "C1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C2", "post": "C3", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C3", "post": "C2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C3", "post": "C4", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "C4", "post": "C3", "weight": 1.0, "sign": 1, "delay": 0}
+      ],
+      "gap": []
+    },
+    "stimulus": [],
+    "initial_state": {
+      "s": {"C1": 1, "C4": 1}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "s": [
+          [0.0, 1.0, 0.0, 0.0, 1.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

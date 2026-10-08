@@ -1,0 +1,11 @@
+# G0 truth-table cellular automaton: a cell becomes 1 exactly when one of its in-neighbours is 1
+# (elementary rule 90 when the graph is a ring with chemical edges from both ring neighbours).
+wrl 0.1
+rule rule90
+tier G0
+
+state s : 1 = 0
+input active = count_in(s, 1)
+next s = lut(active, [0, 1, 0])
+
+observe identity_v1(s)

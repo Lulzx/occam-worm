@@ -1,0 +1,58 @@
+{
+  "name": "permutation-g0-ring",
+  "description": "Rule 90 on a ring with neurons listed in a scrambled order.",
+  "derivation": "Integer dynamics are order independent: every output of the reordered neuron equals the original's exactly (zero tolerance).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G0",
+      "state s : 1 = 0",
+      "next s = lut(count_in(s, 1), [0, 1, 0])",
+      "observe identity_v1(s)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 8,
+    "graph": {
+      "neurons": [
+        {"id": "N0"},
+        {"id": "N1"},
+        {"id": "N2"},
+        {"id": "N3"},
+        {"id": "N4"},
+        {"id": "N5"},
+        {"id": "N6"},
+        {"id": "N7"}
+      ],
+      "chemical": [
+        {"pre": "N0", "post": "N7", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N0", "post": "N1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N1", "post": "N0", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N1", "post": "N2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N2", "post": "N1", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N2", "post": "N3", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N3", "post": "N2", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N3", "post": "N4", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N4", "post": "N3", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N4", "post": "N5", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N5", "post": "N4", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N5", "post": "N6", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N6", "post": "N5", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N6", "post": "N7", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N7", "post": "N6", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "N7", "post": "N0", "weight": 1.0, "sign": 1, "delay": 0}
+      ],
+      "gap": []
+    },
+    "stimulus": [],
+    "initial_state": {
+      "s": {"N3": 1, "N4": 1}
+    }
+  },
+  "check": {
+    "type": "permutation",
+    "permutation": [5, 2, 7, 0, 3, 6, 1, 4],
+    "tolerance": {"abs": 0, "rel": 0}
+  }
+}

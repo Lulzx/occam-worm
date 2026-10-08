@@ -51,7 +51,7 @@ The specification is split by topic. Section numbers (§) from the single-file s
 | 2.4 | Trial inclusion and response definition | [data/DATA_CONTRACT.md](data/DATA_CONTRACT.md) |
 | 3 | Formal problem statement | [science/PROBLEM_STATEMENT.md](science/PROBLEM_STATEMENT.md) |
 | 4 | Baselines and indicator-kinetics control | [science/BASELINES.md](science/BASELINES.md) |
-| 5 | Rule language (WRL) | [language/GRAMMAR.md](language/GRAMMAR.md) |
+| 5 | Rule language (WRL) | [language/GRAMMAR.md](language/GRAMMAR.md) · concrete syntax, IR and execution semantics: [language/WRL_SYNTAX.md](language/WRL_SYNTAX.md) |
 | 6 | Simulation runtime | [runtime/SIM_SEMANTICS.md](runtime/SIM_SEMANTICS.md) |
 | 7 | Program discovery and parameter inference | [inference/SEARCH_AND_INFERENCE.md](inference/SEARCH_AND_INFERENCE.md) |
 | 8 | Hypothesis graph and experiment design | [science/EXPERIMENT_DESIGN.md](science/EXPERIMENT_DESIGN.md) |

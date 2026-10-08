@@ -1,0 +1,51 @@
+{
+  "name": "gap-multigraph",
+  "description": "Parallel gap junctions, including one listed as (b, a), are separate junctions.",
+  "derivation": "Three junctions between A and B (1, 0.5, 0.25) add conductances to G and S of both endpoints; exact rational recurrence of section 6.6 with dt = 1/2.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.5,
+    "n_steps": 4,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 1.0},
+        {"a": "B", "b": "A", "g": 0.5},
+        {"a": "A", "b": "B", "g": 0.25},
+        {"a": "B", "b": "C", "g": 2.0}
+      ]
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"A": 1.0, "C": -1.0}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [1.0, 0.0, -1.0],
+          [0.5333333333333333, -0.043478260869565216, -0.5],
+          [0.26415458937198066, -0.02671707624448645, -0.2717391304347826],
+          [0.12841447875096268, -0.023415979470882076, -0.14922810333963454],
+          [0.057560264914101794, -0.020967448314234523, -0.0863220414052583]
+        ]
+      }
+    }
+  }
+}

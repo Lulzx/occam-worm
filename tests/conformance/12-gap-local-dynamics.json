@@ -1,0 +1,54 @@
+{
+  "name": "gap-local-dynamics",
+  "description": "Gap stage applied to the provisional value of a non-trivial local update with a default scale parameter.",
+  "derivation": "w = u (euler_leak with dt = tau = 1), then x' = (w_i + dt S_i)/(1 + dt G_i) with S from the OLD x and c = 0.5 * g (default scale (0+1)/2): exact rational recurrence with u = (1, 0, 0).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "param k : 1 in [0, 1] trainable bits 8",
+      "next v = euler_leak(v, stimulus, tau)",
+      "gap v scale k",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 6,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 1.0},
+        {"a": "B", "b": "C", "g": 3.0}
+      ]
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 6, "amplitude": 1.0}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0],
+          [0.6666666666666666, 0.0, 0.0],
+          [0.6666666666666666, 0.1111111111111111, 0.0],
+          [0.7037037037037037, 0.1111111111111111, 0.06666666666666667],
+          [0.7037037037037037, 0.1506172839506173, 0.06666666666666667],
+          [0.7168724279835391, 0.1506172839506173, 0.09037037037037036],
+          [0.7168724279835391, 0.1646639231824417, 0.09037037037037036]
+        ]
+      }
+    }
+  }
+}

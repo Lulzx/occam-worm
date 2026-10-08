@@ -1,0 +1,65 @@
+{
+  "name": "delay-ring-wraparound",
+  "description": "Pulses at ticks 0 and 5 through delays 2, 0 and 1 (ring of 3 slots wraps several times); every tick sampled.",
+  "derivation": "A(k) = u(k-1), so A is 1 at ticks 1 and 6. B(t+1) = A(t-2), C(t+1) = A(t), D(t+1) = A(t-1) with A(s<0) = A(0) = 0: B pulses at ticks 4 and 9, C at 2 and 7, D at 3 and 8.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "dt_max 1",
+      "state v : 1 = 0",
+      "param tau : s = 1 fixed",
+      "input u = stimulus",
+      "input e = sum_in(v, exc)",
+      "next v = euler_leak(v, u + e, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 14,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"},
+        {"id": "C"},
+        {"id": "D"}
+      ],
+      "chemical": [
+        {"pre": "A", "post": "B", "weight": 1.0, "sign": 1, "delay": 2},
+        {"pre": "A", "post": "C", "weight": 1.0, "sign": 1, "delay": 0},
+        {"pre": "A", "post": "D", "weight": 1.0, "sign": 1, "delay": 1}
+      ],
+      "gap": []
+    },
+    "stimulus": [
+      {"neuron": "A", "start": 0, "end": 1, "amplitude": 1.0},
+      {"neuron": "A", "start": 5, "end": 6, "amplitude": 1.0}
+    ]
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.0, 0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0],
+          [0.0, 1.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [1.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0],
+          [0.0, 1.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0]
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "decay-zero-stimulus",
+  "description": "decay(v, tau) from an initial value of 0.5 with no stimulus.",
+  "derivation": "decay is leaky_integrate towards 0, the exact solution of dx/dt = -x/tau: v_n = 0.5 exp(-n dt / tau).",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0.5",
+      "param tau : s = 0.5 fixed",
+      "next v = decay(v, tau)",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 0.1,
+    "n_steps": 20,
+    "graph": {
+      "neurons": [
+        {"id": "A"}
+      ],
+      "chemical": [],
+      "gap": []
+    },
+    "stimulus": []
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 1e-12, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [0.5],
+          [0.4093653765389909],
+          [0.33516002301781966],
+          [0.2744058180470132],
+          [0.22466448205861078],
+          [0.18393972058572117],
+          [0.150597105956101],
+          [0.12329848197080322],
+          [0.10094825899732769],
+          [0.08264944411079327],
+          [0.06766764161830635],
+          [0.055401579181166935],
+          [0.045358976644706235],
+          [0.03713678910716694],
+          [0.030405031312608976],
+          [0.024893534183931972],
+          [0.020381101989183106],
+          [0.016686634980163033],
+          [0.01366186122364628],
+          [0.011185385928082795],
+          [0.00915781944436709]
+        ]
+      }
+    }
+  }
+}

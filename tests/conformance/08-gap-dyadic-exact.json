@@ -1,0 +1,49 @@
+{
+  "name": "gap-dyadic-exact",
+  "description": "Gap coupling with dt = 1 and g = 3 so that every intermediate value is dyadic (zero tolerance).",
+  "derivation": "v_i' = (v_i + 3 v_j) / 4 from the old values: (1, 0) -> (1/4, 3/4) -> (5/8, 3/8) -> ... All divisions are by 4, so binary floating point reproduces the rational values exactly.",
+  "program": {
+    "source": [
+      "wrl 0.1",
+      "tier G1",
+      "state v : 1 = 0",
+      "gap v",
+      "observe identity_v1(v)"
+    ]
+  },
+  "input": {
+    "dt": 1.0,
+    "n_steps": 6,
+    "graph": {
+      "neurons": [
+        {"id": "A"},
+        {"id": "B"}
+      ],
+      "chemical": [],
+      "gap": [
+        {"a": "A", "b": "B", "g": 3.0}
+      ]
+    },
+    "stimulus": [],
+    "initial_state": {
+      "v": {"A": 1.0}
+    }
+  },
+  "check": {
+    "type": "traces",
+    "tolerance": {"abs": 0, "rel": 0},
+    "expected": {
+      "registers": {
+        "v": [
+          [1.0, 0.0],
+          [0.25, 0.75],
+          [0.625, 0.375],
+          [0.4375, 0.5625],
+          [0.53125, 0.46875],
+          [0.484375, 0.515625],
+          [0.5078125, 0.4921875]
+        ]
+      }
+    }
+  }
+}

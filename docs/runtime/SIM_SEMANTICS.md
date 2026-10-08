@@ -130,3 +130,21 @@ For a small graph (e.g., 3–8 neurons), implement a scalar reference interprete
 | Replay | Bitwise deterministic CPU in pinned builds where practical | Audit and reproducibility |
 
 Benchmark on the intended Apple Silicon machine using **actual measured** throughput; do not promise fixed simulation rates, acceleration ratios or memory use before implementation. The limiting cost may be fitting parameters or reading trial data, not the tiny nervous-system forward pass.
+
+### Implemented (OW-009)
+
+The C++ scalar reference interpreter (`libs/ow-sim`, `ow sim run`) implements §6.1-§6.4 and §6.7-§6.8 for tiers G0 and G1 as follows. The exact formulas, JSON formats and conformance case format are in [WRL_SYNTAX.md](../language/WRL_SYNTAX.md) §5-§7; this note only points at the decisions that §6 left open.
+
+| Topic | Decision | Where |
+|---|---|---|
+| Step order (§6.1) | Stimulus, snapshot, chemical sums, gap sums, local update, observation, commit, sampling, exactly as listed; every read sees only tick-`t` state and history | WRL_SYNTAX §6.3 |
+| CSR orientation (§6.2) | Chemical edges are stored by postsynaptic row (row `i` lists the inputs of neuron `i`), rows sorted by (pre, delay, sign, weight); gap junctions stored in both endpoint rows; orientation version 1 | `ow-core/graph.hpp`, `tests/cpp/test_core.cpp` |
+| Gap junctions (§6.3) | Node-local semi-implicit step `x_i' = (w_i + dt * sum_j c_ij x_j) / (1 + dt * sum_j c_ij)` with neighbours from the old state: unconditionally stable, preserves a constant-voltage equilibrium, first-order accurate, does not conserve the register total | WRL_SYNTAX §6.6 |
+| Delays (§6.4) | Integer ticks; `delay = 0` reads the old state; history before tick 0 equals the initial state (constant extension, includes overrides); ring of `D+1` slots per register | WRL_SYNTAX §6.5 |
+| Observation (§6.1 step 6) | `identity_v1` or `calcium_linear_v1`: exact first-order filter driven by the post-update register value, initial filter state equal to the register's initial value | WRL_SYNTAX §6.7 |
+| Sampling (§6.1 step 8) | Sample tick `k` is the state after `k` steps (`k = 0` is the initial state); physical time `k * dt` | WRL_SYNTAX §6.3 |
+| Stability (§6.5) | `leaky_integrate` is exact for constant targets; `euler_leak` needs `dt_max / tau_lower <= 1`, checked at compile time and against `dt` at run time; non-finite values abort the run with `E_RUNTIME` | WRL_SYNTAX §3, §6.9 |
+| Randomness (§6.6) | G0/G1 are deterministic, so the interpreter has no RNG; the Philox plan for G5 is written down | WRL_SYNTAX §6.10 |
+| Oracle (§6.8) | `tests/conformance/*.json`, run by `ow sim conformance` and CTest; expected values are analytic or hand-derived | WRL_SYNTAX §7 |
+
+Still open from §6: the independent scalar Python implementation and the differentiable simulator (OW-009 Python half), steady-state and measured-calibration initial conditions (§6.7 policies 1-3; policy 4, history-conditioned, is available through `initial_state`), the dt-versus-dt/2 gate as an automatic filter on candidate programs, and continuous-delay interpolation.
