@@ -3,8 +3,8 @@
 Per outer fold: build the training view, run every candidate's inner selection inside it, rank by summed
 inner-validation NLL (ties: shorter L_total), keep the (L_total, inner NLL) Pareto front, refit the winner on the
 whole view, freeze the selection, and hand it to the locked evaluator, which scores the held-out animals once.
-The search log records every attempted candidate and the budget (§7.8). ``search_fold`` has no parameter through
-which held-out data could arrive.
+The search log records every attempted candidate, the candidates a gate rejected before fitting, and the budget
+(§7.8). ``search_fold`` has no parameter through which held-out data could arrive.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Any
 
 from occamworm.analysis.splits import Split
 from occamworm.baselines.data import TaskData
-from occamworm.search.candidates import Candidate, InnerResult
+from occamworm.search.candidates import Candidate, CandidateRejected, InnerResult
 from occamworm.search.locked import LockedEvaluator, freeze_selection
 from occamworm.search.views import TrainingView, animals_hash, views_for_fold
 
@@ -42,7 +42,12 @@ def search_fold(
 ) -> dict[str, Any]:
     t0 = time.time()
     budget = len(candidates) if max_candidates is None else min(max_candidates, len(candidates))
-    results = [c.inner_select(view) for c in candidates[:budget]]
+    results, rejected = [], {}
+    for c in candidates[:budget]:
+        try:
+            results.append(c.inner_select(view))
+        except CandidateRejected as e:
+            rejected[c.key] = str(e)
     ranked = sorted(results, key=lambda r: (r.inner_nll, r.l_total_bits, r.key))
     return {
         "ranked": ranked,
@@ -50,6 +55,7 @@ def search_fold(
         "log": {
             "candidates_offered": len(candidates),
             "candidates_attempted": budget,
+            "candidates_rejected": rejected,
             "inner_folds": len(view.inner),
             "seconds": time.time() - t0,
         },

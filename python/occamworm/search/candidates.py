@@ -27,6 +27,10 @@ FloatArray = npt.NDArray[np.float64]
 BITS_PER_FLOAT = 32  # declared precision of fitted kernel coefficients for L_params (§5.7)
 
 
+class CandidateRejected(ValueError):
+    """A candidate refused before fitting (e.g. a WRL program failing a structural or stability gate)."""
+
+
 @dataclass
 class InnerResult:
     key: str
@@ -141,22 +145,27 @@ class KernelCandidate:
         }
 
     def score(self, fitted: dict[str, Any], test: TaskData) -> dict[str, float]:
-        ind = None
-        if fitted["indicator"]:
-            ind = Indicator(fitted["indicator"]["tau_r_s"], fitted["indicator"]["tau_d_s"])
-        designs = trial_designs(test, ind)
-        c = np.zeros((len(test.pairs), M))
-        for p, (t, r) in enumerate(test.pairs):
-            k = fitted["kernels"].get(f"{t}|{r}")
-            if k is not None:
-                c[p] = k
-        beta = np.asarray(fitted["beta"], dtype=np.float64)
-        rows = np.arange(test.n_traces)
-        mu = predict(test, designs, c, beta, rows)
-        n = fitted["noise"]
-        noise = NoiseModel(float(n["a"]), float(n["b"]), float(n["phi"]))
-        nll = ar1_nll(test.y[rows].astype(np.float64) - mu, test.m[rows], noise.sigma(test.s[rows]), noise.phi)
-        out: dict[str, float] = {}
-        for a, x in zip(np.asarray(test.animals, dtype=object)[test.trace_animal[rows]], nll, strict=True):
-            out[a] = out.get(a, 0.0) + float(x)
-        return out
+        return score_kernels(fitted, test)
+
+
+def score_kernels(fitted: dict[str, Any], test: TaskData) -> dict[str, float]:
+    """Per-animal NLL of frozen pair kernels (keyed ``target|responder``), baseline and noise on held-out data."""
+    ind = None
+    if fitted["indicator"]:
+        ind = Indicator(fitted["indicator"]["tau_r_s"], fitted["indicator"]["tau_d_s"])
+    designs = trial_designs(test, ind)
+    c = np.zeros((len(test.pairs), M))
+    for p, (t, r) in enumerate(test.pairs):
+        k = fitted["kernels"].get(f"{t}|{r}")
+        if k is not None:
+            c[p] = k
+    beta = np.asarray(fitted["beta"], dtype=np.float64)
+    rows = np.arange(test.n_traces)
+    mu = predict(test, designs, c, beta, rows)
+    n = fitted["noise"]
+    noise = NoiseModel(float(n["a"]), float(n["b"]), float(n["phi"]))
+    nll = ar1_nll(test.y[rows].astype(np.float64) - mu, test.m[rows], noise.sigma(test.s[rows]), noise.phi)
+    out: dict[str, float] = {}
+    for a, x in zip(np.asarray(test.animals, dtype=object)[test.trace_animal[rows]], nll, strict=True):
+        out[a] = out.get(a, 0.0) + float(x)
+    return out
