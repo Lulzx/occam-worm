@@ -1,40 +1,33 @@
 # Occam's Worm
 
-Occam's Worm searches a small typed language of local neural update rules, runs candidates on the *C. elegans* connectome, and keeps only rules that predict causal responses in animals they never saw.
+Searches a small typed language of local neural update rules, runs candidates on the *C. elegans* connectome, and keeps only rules that predict causal responses in animals they never saw. Brevity is a tie-breaker, never a substitute for held-out accuracy.
 
-The name is the selection principle: prefer the most compact program, but only among programs that predict held-out interventions. Brevity is a prior and a tie-breaker. It never substitutes for causal accuracy.
+**Status:** spec v0.4.1. M0 in progress: data acquisition ([OW-001](docs/planning/tickets/OW-001.md)) and the trial-level atlas importer ([OW-002](docs/planning/tickets/OW-002.md)) are done.
 
-**Status:** specification v0.4.0. No code is implemented yet.
+## Quickstart
 
-## Documentation
-
-- [docs/SUMMARY.md](docs/SUMMARY.md): one-page specification
-- [docs/README.md](docs/README.md): full specification index, split by topic
-- [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md): milestones M0–M7 and their gates
-- [docs/planning/tickets/](docs/planning/tickets/README.md): implementation tickets OW-001 to OW-016
-
-## First milestone
-
-The first scientific release (M0–M1, tickets OW-001 to OW-007) does not need the rule language. It audits the trial-level wild-type stimulation atlas, then tests whether responders to one stimulus share temporal dynamics under animal-wise holdout, with the calcium indicator modeled as a separate stage. Start with [OW-001](docs/planning/tickets/OW-001.md).
-
-## Repository layout
-
-```text
-occam-worm/
-├── docs/        specification, split by topic (start at docs/README.md)
-├── libs/        C++26 libraries, namespace occamworm:: (ow-core, ow-ir, ow-sim, ...)
-├── python/      the occamworm package: importers, baselines, sim, fit, analysis, plotting
-├── configs/     datasets, splits, rules, experiments, searches
-├── tests/       synthetic_truth, conformance, adversarial, leakage, fuzz, integration
-├── benches/     forward_runtime, candidate_throughput, fitting
-├── scripts/     acquisition, manifests, figure reproduction
-├── notebooks/   exploratory only; never part of the canonical pipeline
-├── artifacts/   immutable, content-addressed run outputs (gitignored)
-└── data/        raw (immutable, gitignored), normalized, splits
+```bash
+pip install -e '.[dev]'
 ```
 
-Every directory has a README giving its purpose, its invariant, the tickets that fill it, and links into the spec. Build files (`CMakeLists.txt`, `CMakePresets.json`, `vcpkg.json`, `pyproject.toml`) arrive with the first code ticket that needs them; see [docs/engineering/REPRODUCIBILITY.md](docs/engineering/REPRODUCIBILITY.md) for the toolchain.
+```bash
+python -m occamworm.sources fetch --milestone M0
+```
+
+```bash
+python -m occamworm.importers randi2023 import
+```
+
+```bash
+pytest
+```
+
+## Docs
+
+- [Spec summary](docs/SUMMARY.md) · [full spec index](docs/README.md)
+- [Roadmap](docs/planning/ROADMAP.md) · [tickets](docs/planning/tickets/README.md)
+- [Data acquisition](docs/data/ACQUISITION.md) · [Randi 2023 import](docs/data/RANDI2023_IMPORT.md)
 
 ## License
 
-[Apache License 2.0](LICENSE) for original code and documentation. Upstream datasets and external simulators keep their own licenses; how conflicts are handled in public releases is [open decision 12](docs/planning/OPEN_DECISIONS.md).
+[Apache 2.0](LICENSE). Upstream data and code keep their own licenses; most atlas data declares none ([details](docs/data/ACQUISITION.md#findings-2026-10-08)).
