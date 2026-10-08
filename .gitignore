@@ -2,6 +2,7 @@
 /data/raw/*
 /data/normalized/*
 /data/splits/*
+/data/derived/*
 !/data/**/README.md
 
 # Generated run outputs (content-addressed; published separately)
