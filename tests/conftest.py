@@ -1,15 +1,12 @@
-"""Fixtures for the simulator unit tests: programs are compiled by the ``ow`` binary (skipped when absent)."""
+"""Shared fixtures: programs are compiled by the ``ow`` binary (tests needing it are skipped when it is absent)."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from pathlib import Path
 
 import pytest
 
-from occamworm.sim.ir import Program, compile_source, find_ow, repo_root
-
-RULES_DIR = repo_root() / "configs" / "rules"
+from occamworm.sim.ir import Program, compile_source, find_ow
 
 
 @pytest.fixture(scope="session")
@@ -24,8 +21,3 @@ def compile_wrl() -> Callable[[str], Program]:
         return cache[source]
 
     return compile_
-
-
-@pytest.fixture(scope="session")
-def rule_path() -> Callable[[str], Path]:
-    return lambda name: RULES_DIR / name

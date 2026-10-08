@@ -22,11 +22,11 @@ from occamworm.sim import jaxsim
 from occamworm.sim.ir import compile_file
 from occamworm.sim.graph import build_graph
 
-program = compile_file("configs/rules/leak-adapt.wrl")        # IR from the ow binary
-graph = build_graph(spec)                                      # GraphSpec -> CSR Graph
+program = compile_file("configs/rules/leak-adapt.wrl")  # IR from the ow binary
+graph = build_graph(spec)  # GraphSpec -> CSR Graph
 sim = jaxsim.JaxSimulator(program, graph, dt=0.1, n_steps=200, observed=[0, 5], sample_ticks=range(0, 201, 5))
-stim = jaxsim.stimulus_array(events, graph, 200)               # (T, N); stack to (B, T, N) for a batch
-obs = sim.observe(program.default_theta(), stim)               # (S, K); sim.run also returns all registers
+stim = jaxsim.stimulus_array(events, graph, 200)  # (T, N); stack to (B, T, N) for a batch
+obs = sim.observe(program.default_theta(), stim)  # (S, K); sim.run also returns all registers
 grad = jax.grad(lambda th: (sim.observe(th, stim) ** 2).sum())(program.default_theta())
 ```
 
