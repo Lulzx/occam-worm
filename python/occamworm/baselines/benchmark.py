@@ -25,9 +25,10 @@ import numpy.typing as npt
 import pyarrow.parquet as pq
 
 from occamworm.analysis.dataset import PRE, dataset_dir, load_windows
+from occamworm.analysis.provenance import file_sha256, git_revision, write_run_manifest
 from occamworm.analysis.splits import Split, read_split
 from occamworm.baselines.data import Stats, TaskData, build_task, compute_stats, trial_designs
-from occamworm.baselines.evaluate import Fitter, FoldResult, evaluate_fold, make_fitter
+from occamworm.baselines.evaluate import Fitter, FoldResult, evaluate_fold, make_fitter, rows_of
 from occamworm.baselines.indicator import Indicator, estimate_from_autoresponses
 
 FloatArray = npt.NDArray[np.float64]
@@ -94,6 +95,27 @@ def _init_worker(root: str, exp: dict[str, Any], cfg: Config) -> None:
         _STATE.update(designs=designs, stats=compute_stats(data, designs))
 
 
+def run_inputs(root: Path, exp: dict[str, Any], families: tuple[str, ...]) -> dict[str, Any]:
+    """Everything a benchmark result depends on (§14.7)."""
+    ds = dataset_dir(root, exp["data"]["dataset"])
+    split = json.loads((root / exp["splits"]["split"]).read_text())
+    ann = root / "data" / "normalized" / "annotations-v1" / "manifest.json"
+    return {
+        "kind": "baseline_benchmark",
+        "dataset_manifest_sha256": file_sha256(ds / "manifest.json"),
+        "eligibility_sha256": file_sha256(root / exp["data"]["eligibility"]),
+        "split_sha256": split["split_sha256"],
+        "graph": {
+            "annotations_manifest_sha256": file_sha256(ann) if ann.exists() else None,
+            "reconstruction": "cook2019-herm",
+        },
+        "experiment_config_sha256": file_sha256(root / "configs" / "experiments" / "shared-timescales.toml"),
+        "families": list(families),
+        "code": git_revision(root),
+        "seeds": {"split": split["spec"]["seed"], "bootstrap": exp["report"]["bootstrap_replicates"]},
+    }
+
+
 def fitter_for(family: str, data: TaskData, designs: FloatArray, train: BoolArray) -> Fitter:
     if family.startswith("B4"):
         from occamworm.baselines.linear_network import make_b4_fitter
@@ -116,6 +138,9 @@ def _run_fold(i: int, families: tuple[str, ...]) -> list[dict[str, Any]]:
         extra["indicator"] = ind.to_json()
     else:
         designs, stats = _STATE["designs"], _STATE["stats"]
+    scored = np.unique(data.trace_trial[rows_of(data, test)])
+    extra["test_animals"] = [data.animals[a] for a in np.nonzero(test)[0]]
+    extra["test_trials"] = [data.trial_ids[k] for k in scored]
     out = []
     for fam in families:
         t0 = time.time()
@@ -163,7 +188,7 @@ def run(
     folds: list[int] | None = None,
 ) -> Path:
     exp = load_experiment(root)
-    out.mkdir(parents=True, exist_ok=True)
+    write_run_manifest(out, run_inputs(root, exp, families))
     log = out / "folds.jsonl"
     done: set[tuple[str, int, str]] = set()
     if log.exists():
