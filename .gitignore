@@ -1,7 +1,9 @@
 # Data: raw downloads are immutable and never committed; normalized tables and splits are local.
 /data/raw/*
 /data/normalized/*
-/data/splits/*
+/data/splits/*/*
+!/data/splits/*/split.json
+!/data/splits/*/provenance.json
 /data/derived/*
 !/data/**/README.md
 
@@ -34,3 +36,6 @@ _skbuild/
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code agent worktrees
+/.claude/worktrees/

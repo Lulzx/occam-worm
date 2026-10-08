@@ -1,0 +1,11 @@
+{
+  "audit": "artifacts/audit-v1/audit.json",
+  "audit_code_revision": "5822ecc1dd2f213cbb89c16801e7254e73debc83",
+  "selection_rule": "most eligible targets covered (tested in an outer fold and fit+validated in at least one inner fold of every outer fold that tests it); ties broken by fewer outer folds",
+  "chosen": "loao",
+  "outer_folds": 113,
+  "test_animals_per_fold": [
+    1,
+    1
+  ]
+}
