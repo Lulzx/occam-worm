@@ -83,7 +83,7 @@ class KernelCandidate:
 
     family: str
     l_struct_bits: float
-    ridge_grid: tuple[float, ...] = (0.1, 1.0, 10.0, 100.0)
+    ridge_grid: tuple[float, ...] = (0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)
     kind: str = "kernel"
 
     @property
@@ -108,11 +108,11 @@ class KernelCandidate:
             warm: Fit | None = None
             for lam in sorted(grid):
                 warm = fits[lam] = self._fit(data, ps, lam, warm)
-            noise = noise_for(data, designs, fits[grid[len(grid) // 2]], rows_of(data, itrain))
+            trows = rows_of(data, itrain)
             vrows = rows_of(data, ival)
             animals = np.asarray(data.animals, dtype=object)[data.trace_animal[vrows]]
             for lam, f in fits.items():
-                nll, _, _ = score_rows(data, designs, f, noise, vrows)
+                nll, _, _ = score_rows(data, designs, f, noise_for(data, designs, f, trows), vrows)
                 totals[lam] += float(nll.sum())
                 for a, x in zip(animals, nll, strict=True):
                     per_animal[lam][a] = per_animal[lam].get(a, 0.0) + float(x)

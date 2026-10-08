@@ -32,6 +32,12 @@ CONTRASTS = [
 ]
 
 
+def _edges(row: dict[str, Any]) -> set[float]:
+    """Smallest and largest ridge values of the grid the fold was selected from."""
+    grid = [float(k) for k in row["inner_scores"]]
+    return {min(grid), max(grid)}
+
+
 def load_rows(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
@@ -92,6 +98,9 @@ def summarize(root: Path, out: Path) -> dict[str, Any]:
                             for lv in ("0.50", "0.80", "0.95")
                         },
                         "lam_rel_mode": max({r["lam_rel"] for r in rs}, key=[r["lam_rel"] for r in rs].count),
+                        "lam_rel_at_grid_edge": float(
+                            np.mean([len(r["inner_scores"]) > 1 and r["lam_rel"] in _edges(r) for r in rs])
+                        ),
                         "n_params_median": float(np.median([r["n_params"] for r in rs])),
                         "seconds": float(sum(r["seconds"] for r in rs)),
                     }
@@ -171,15 +180,17 @@ def render(r: dict[str, Any]) -> str:
         lines += [
             f"## {task}{primary}",
             "",
-            "| family | history | animals | NLL | NLL/sample | MSE | cov50 | cov80 | cov95 | ridge | params |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| family | history | animals | NLL | NLL/sample | MSE | cov50 | cov80 | cov95 | ridge | ridge at edge "
+            "| params |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
         for row in table:
             cv = row["coverage"]
             lines.append(
                 f"| {row['family']} | {'yes' if row['history'] else 'no'} | {row['n_animals']} | "
                 f"{_f(row['nll_total'])} | {_f(row['nll_per_sample'], 4)} | {_f(row['mse'])} | {_f(cv['0.50'])} | "
-                f"{_f(cv['0.80'])} | {_f(cv['0.95'])} | {_f(row['lam_rel_mode'])} | {_f(row['n_params_median'])} |"
+                f"{_f(cv['0.80'])} | {_f(cv['0.95'])} | {_f(row['lam_rel_mode'])} | "
+                f"{_f(row['lam_rel_at_grid_edge'])} | {_f(row['n_params_median'])} |"
             )
         lines += [
             "",

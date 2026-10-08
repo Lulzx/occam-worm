@@ -25,7 +25,7 @@ split = "data/splits/randi2023-wt-v1-loao/split.json"   # leave-one-animal-out x
 
 [models]
 families = ["B0", "B1", "B1d", "B2-K1", "B2-K2", "B2-K4", "B2-K8", "B3", "B4-fixed", "B4-learned"]
-ridge_grid = [0.1, 1.0, 10.0, 100.0]   # relative to median trace(G_p)/M of the training data
+ridge_grid = [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]   # relative to median trace(G_p)/M of the training data
 kernel_knots_volumes = [0, 1, 2, 4, 6, 9, 13, 18, 25, 33, 43, 59]
 b1d_delays_volumes = [-2, -1, 0, 1, 2]
 

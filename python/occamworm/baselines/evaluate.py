@@ -22,7 +22,7 @@ from occamworm.baselines.kernels import Fit, fit_family
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
 BoolArray = npt.NDArray[np.bool_]
-LAM_GRID = (0.1, 1.0, 10.0, 100.0)
+LAM_GRID = (0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)
 NOISE_TRACES = 30_000
 
 Fitter = Callable[[PairStats, float, Fit | None], Fit]  # (stats, ridge, warm start) -> fit
@@ -105,10 +105,12 @@ def evaluate_fold(
         warm: Fit | None = None
         for lam in sorted(grid):  # warm-start along the ridge path, within this inner training set
             warm = fits[lam] = fitter(ps, lam, warm)
-        ref = fits[grid[len(grid) // 2]]
-        noise = noise_for(data, designs, ref, rows_of(data, itrain))
+        trows_inner = rows_of(data, itrain)
         vrows = rows_of(data, ival)
         for lam, f in fits.items():
+            # Each ridge value is scored with the noise fitted on its own training residuals, exactly as the
+            # outer refit is; one shared noise model would favour whichever ridge value it was fitted on.
+            noise = noise_for(data, designs, f, trows_inner)
             nll, _, _ = score_rows(data, designs, f, noise, vrows)
             inner_scores[lam] += float(nll.sum())
         last_inner = fits

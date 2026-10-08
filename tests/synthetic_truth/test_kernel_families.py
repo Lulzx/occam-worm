@@ -58,3 +58,17 @@ def test_als_families_do_not_beat_unconstrained_training_loss() -> None:
     assert loss(ps, b3.c, b3.beta, lam) <= b1d.loss + 1e-9 <= b1.loss + 1e-9
     assert loss(ps, b3.c, b3.beta, lam) <= k8.loss + 1e-9
     assert b1.loss == pytest.approx(loss(ps, b1.c, b1.beta, lam))
+
+
+def test_inner_score_of_a_ridge_value_does_not_depend_on_the_rest_of_the_grid() -> None:
+    """Regression: one noise model shared across the grid biased selection toward the grid edge."""
+    data, _ = generate(SyntheticSpec("independent", seed=2))
+    designs = trial_designs(data)
+    stats = compute_stats(data, designs)
+    test = np.zeros(len(data.animals), dtype=bool)
+    test[::4] = True
+    inner = grouped_inner(~test, 3, lambda a: data.animals[a])
+    full = evaluate_fold(data, stats, designs, ~test, test, inner, "B3", lam_grid=(0.01, 0.1, 1.0, 10.0))
+    for lam in (0.01, 10.0):
+        alone = evaluate_fold(data, stats, designs, ~test, test, inner, "B3", lam_grid=(lam,))
+        assert full.inner_scores[lam] == pytest.approx(alone.inner_scores[lam], rel=1e-6)
