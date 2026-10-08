@@ -1,0 +1,24 @@
+# Spec §5.5 rule in WRL v0.1 syntax: leaky E/I network neuron with a slow adaptation register.
+# Both time constants use the exact exponential integrator, so no dt/tau bound applies.
+wrl 0.1
+rule leak_exc_inh_adapt_v1
+tier G1
+
+state v : 1 = 0
+state h : 1 = 0
+
+param tau_v : s = 0.25 in [0.005, 10] trainable bits 12
+param tau_h : s = 2.0 in [0.01, 30] trainable bits 12
+param gain : 1 = 1.0 in [0, 20] trainable bits 10
+param adapt : 1 = 0.2 in [0, 10] trainable bits 10
+param tau_ca : s = 0.5 in [0.05, 5] trainable bits 10
+
+input u = stimulus
+input exc = sum_in(v, exc)
+input inh = sum_in(v, inh)
+
+let drive = gain * (exc - inh + u) - adapt * h
+next v = leaky_integrate(v, tanh(drive), tau_v)
+next h = leaky_integrate(h, relu(v), tau_h)
+
+observe calcium_linear_v1(v, tau_ca)

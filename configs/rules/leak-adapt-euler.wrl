@@ -1,0 +1,24 @@
+# The same rule with the explicit-Euler primitive. It compiles only because dt_max / tau_lower <= 1:
+# dt_max = 0.05 s and every time constant is bounded below by 0.05 s.
+wrl 0.1
+rule leak_exc_inh_adapt_euler
+tier G1
+dt_max 0.05
+
+state v : 1 = 0
+state h : 1 = 0
+
+param tau_v : s = 0.25 in [0.05, 10] trainable bits 12
+param tau_h : s = 2.0 in [0.05, 30] trainable bits 12
+param gain : 1 = 1.0 in [0, 20] trainable bits 10
+param adapt : 1 = 0.2 in [0, 10] trainable bits 10
+
+input u = stimulus
+input exc = sum_in(v, exc)
+input inh = sum_in(v, inh)
+
+let drive = gain * (exc - inh + u) - adapt * h
+next v = euler_leak(v, tanh(drive), tau_v)
+next h = euler_leak(h, relu(v), tau_h)
+
+observe identity_v1(v)

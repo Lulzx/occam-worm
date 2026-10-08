@@ -1,0 +1,16 @@
+# Leaky neuron with electrical coupling: the register v diffuses over gap junctions with the
+# semi-implicit scheme of docs/language/WRL_SYNTAX.md; `scale` is a trainable conductance multiplier.
+wrl 0.1
+rule gap_leak
+tier G1
+
+state v : 1 = 0
+param tau : s = 0.5 in [0.01, 10] trainable bits 12
+param g_scale : 1 = 1.0 in [0, 10] trainable bits 10
+
+input u = stimulus
+input chem = sum_in(v, all)
+next v = leaky_integrate(v, u + chem, tau)
+gap v scale g_scale
+
+observe identity_v1(v)

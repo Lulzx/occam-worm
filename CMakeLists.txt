@@ -34,6 +34,9 @@ include(CTest)
 
 add_subdirectory(libs/ow-core)
 add_subdirectory(libs/ow-ir)
+add_subdirectory(libs/ow-sim)
+add_subdirectory(libs/ow-search)
+add_subdirectory(libs/ow-cli)
 
 if(BUILD_TESTING)
   add_subdirectory(tests/cpp)

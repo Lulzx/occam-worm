@@ -1,0 +1,12 @@
+# Rejected by the compiler (E_STABILITY): explicit Euler with dt_max / tau_lower = 0.05 / 0.005 = 10 > 1.
+# This is the §5.5 failure case. Replace euler_leak by leaky_integrate or raise the lower bound of tau_v.
+wrl 0.1
+rule leak_euler_unstable
+tier G1
+dt_max 0.05
+
+state v : 1 = 0
+param tau_v : s = 0.25 in [0.005, 10] trainable bits 12
+
+next v = euler_leak(v, stimulus, tau_v)
+observe identity_v1(v)
