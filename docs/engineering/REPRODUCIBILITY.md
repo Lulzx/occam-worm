@@ -59,7 +59,7 @@ cmake --preset asan  -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++
 cmake --build --preset asan && ctest --preset asan
 ```
 
-Each build lands in `build/<preset>/`; the binary is `build/<preset>/libs/ow-cli/ow`. CTest runs the unit tests (SHA-256 FIPS vectors, core, IR, simulator, enumerator, robustness), the conformance suite (`ow sim conformance --suite tests/conformance`), the example rules (the rule in `configs/rules/rejected/` must be rejected) and both enumeration configs. Fuzzing the parser (Clang only; the target is built only when `OW_ENABLE_FUZZ=ON`):
+Each build lands in `build/<preset>/`; the binary is `build/<preset>/libs/ow-cli/ow`. CTest runs the unit tests (SHA-256 FIPS vectors, core, IR, simulator, enumerator, robustness), the conformance suite (`ow sim conformance --suite tests/conformance`), the example rules (the rule in `configs/rules/rejected/` must be rejected) and both enumeration configs. The Python simulators and fitting tests (`pytest`) consume the IR that `build/clang/libs/ow-cli/ow` prints (override the path with `OW_CLI`). Tests that need the binary are skipped with a reason when it is missing; the conformance traces still run from the committed IR cache `tests/conformance/ir_cache/` (refresh it with `OW_UPDATE_IR_CACHE=1 pytest tests/conformance` after a compiler change). Fuzzing the parser (Clang only; the target is built only when `OW_ENABLE_FUZZ=ON`):
 
 ```bash
 cmake --preset fuzz -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++
