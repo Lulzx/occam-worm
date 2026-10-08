@@ -1,0 +1,21 @@
+{
+  "name": "atlas-demo-np",
+  "description": "atlas-demo plus neuropeptide edges: gap-leak with Ripoll-Sanchez 2023 peptide-GPCR routes (sum_in(v, mod)), fast and slow, short and long range, against label-shuffled peptide graphs of the same size.",
+  "task": "T2a",
+  "history": false,
+  "folds": [0, 1, 2],
+  "kernel_families": { "B0": 32, "B1": 64, "B3": 64 },
+  "rules": [
+    "configs/rules/gap-leak.wrl",
+    "configs/rules/leak-adapt.wrl",
+    { "path": "configs/rules/gap-leak-np.wrl", "name": "gap-leak-np@short", "modulatory": "ripoll-sanchez2023-short" },
+    { "path": "configs/rules/gap-leak-np.wrl", "name": "gap-leak-np@long", "modulatory": "ripoll-sanchez2023-long" },
+    { "path": "configs/rules/gap-leak-np-slow.wrl", "name": "gap-leak-np-slow@short", "modulatory": "ripoll-sanchez2023-short" },
+    { "path": "configs/rules/gap-leak-np.wrl", "name": "gap-leak-np@short-shuffled0", "modulatory": "ripoll-sanchez2023-short", "shuffle_seed": 0 },
+    { "path": "configs/rules/gap-leak-np-slow.wrl", "name": "gap-leak-np-slow@short-shuffled0", "modulatory": "ripoll-sanchez2023-short", "shuffle_seed": 0 }
+  ],
+  "enumerate": { "config": "configs/searches/g1-tiny.json", "limit": 400, "max_kept": 8 },
+  "starts": 2,
+  "seed": 0,
+  "budget_orders": 50
+}

@@ -1,0 +1,19 @@
+# gap-leak plus neuropeptide input: sum_in(v, mod) reads the graph's modulatory edges (Ripoll-Sanchez et al. 2023
+# peptide-GPCR routes in the atlas-demo-np search). The edges are unsigned, so g_np carries the sign; at its declared
+# value 0 the rule is gap-leak.
+wrl 0.1
+rule gap_leak_np
+tier G1
+
+state v : 1 = 0
+param tau : s = 0.5 in [0.01, 10] trainable bits 12
+param g_scale : 1 = 1.0 in [0, 10] trainable bits 10
+param g_np : 1 = 0.0 in [-2, 2] trainable bits 10
+
+input u = stimulus
+input chem = sum_in(v, all)
+input pep = sum_in(v, mod)
+next v = leaky_integrate(v, u + chem + g_np * pep, tau)
+gap v scale g_scale
+
+observe identity_v1(v)

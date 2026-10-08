@@ -43,7 +43,7 @@ from occamworm.fit.accounting import l_params_bits
 from occamworm.fit.transforms import ParamTransforms
 from occamworm.search.candidates import CandidateRejected, InnerResult, _indicator, score_kernels
 from occamworm.search.views import TrainingView
-from occamworm.sim.graph import ChemicalEdge, GapJunction, Graph, GraphSpec, build_graph
+from occamworm.sim.graph import ChemicalEdge, GapJunction, Graph, GraphSpec, ModulatoryEdge, build_graph
 from occamworm.sim.ir import Program, compile_source, run_ow
 from occamworm.sim.jaxsim import JaxSimulator
 
@@ -65,14 +65,46 @@ class Connectome:
     meta: dict[str, Any]
 
 
-def load_connectome(root: Path, reconstruction: str = RECONSTRUCTION) -> Connectome:
-    """Chemical and gap edges of one reconstruction, weights scaled to unit max row sum (as in B4)."""
+def load_connectome(
+    root: Path,
+    reconstruction: str = RECONSTRUCTION,
+    modulatory: str | None = None,
+    shuffle_seed: int | None = None,
+) -> Connectome:
+    """Chemical and gap edges of one reconstruction, weights scaled to unit max row sum (as in B4).
+
+    ``modulatory`` names a ``putative_mod`` reconstruction (e.g. ``ripoll-sanchez2023-short``) whose edges become
+    the graph's modulatory edges, weighted by their native count (peptide-GPCR pathways) and scaled to unit max
+    row sum; self-loops are dropped as for chemical edges. ``shuffle_seed`` is the label-permutation control: the
+    modulatory edges are relabelled by a random permutation of the neurons, which keeps their number, weights and
+    degree sequence but breaks which neuron is which.
+    """
     ann = root / "data" / "normalized" / "annotations-v1"
     neurons = sorted(
         str(x) for x in pq.read_table(ann / "neurons.parquet", columns=["neuron_id"]).column(0).to_pylist()
     )
     known = set(neurons)
     edges = pq.read_table(ann / "edges.parquet").to_pylist()
+    mod: dict[tuple[str, str], float] = {}
+    mod_self = 0
+    if modulatory is not None:
+        native = pq.read_table(ann / "edge_details.parquet", columns=["native_weight"]).column(0).to_pylist()
+        for e, w in zip(edges, native, strict=True):
+            if e["source_reconstruction"] != modulatory or e["edge_kind"] != "putative_mod":
+                continue
+            s, t = e["source_neuron_id"], e["target_neuron_id"]
+            if s not in known or t not in known or not w or w <= 0:
+                continue
+            if s == t:
+                mod_self += 1
+                continue
+            mod[(s, t)] = mod.get((s, t), 0.0) + float(w)
+        if not mod:
+            raise ValueError(f"no modulatory edges in reconstruction {modulatory!r}")
+        if shuffle_seed is not None:
+            perm = np.random.default_rng(shuffle_seed).permutation(len(neurons))
+            relabel = {n: neurons[int(k)] for n, k in zip(neurons, perm, strict=True)}
+            mod = {(relabel[s], relabel[t]): w for (s, t), w in mod.items()}
     signs = {
         (e["source_neuron_id"], e["target_neuron_id"]): e["sign"]
         for e in edges
@@ -110,13 +142,25 @@ def load_connectome(root: Path, reconstruction: str = RECONSTRUCTION) -> Connect
         ] += 1
         chemical.append(ChemicalEdge(s, t, w / chem_scale, -1 if sign == "inhibitory" else 1))
     gaps = tuple(GapJunction(a, b, w / gap_scale) for (a, b), w in sorted(gap.items()))
-    spec = GraphSpec(tuple((n, "neuron") for n in neurons), tuple(chemical), gaps)
-    meta = {
+    mrow: dict[str, float] = {}
+    for (_, t), w in mod.items():
+        mrow[t] = mrow.get(t, 0.0) + w
+    mod_scale = max(mrow.values(), default=1.0)
+    mods = tuple(ModulatoryEdge(s, t, w / mod_scale) for (s, t), w in sorted(mod.items()))
+    spec = GraphSpec(tuple((n, "neuron") for n in neurons), tuple(chemical), gaps, mods)
+    meta: dict[str, Any] = {
         "reconstruction": reconstruction,
         "sign_source": SIGN_SOURCE,
         "chemical_edges": counts,
         "gap_junctions": len(gaps),
     }
+    if modulatory is not None:
+        meta["modulatory"] = {
+            "reconstruction": modulatory,
+            "edges": len(mods),
+            "self_loops_dropped": mod_self,
+            "shuffle_seed": shuffle_seed,
+        }
     return Connectome(spec, build_graph(spec), meta)
 
 
@@ -291,6 +335,10 @@ class WrlCandidate:
     def _model(self, data: TaskData) -> ResponseModel:
         if self.connectome is None:
             self.connectome = load_connectome(self.root)
+        if not self.connectome.graph.mod_pre and any(
+            ins.op == "sum_in" and ins.attrs["select"] == "mod" for ins in self.program.instructions
+        ):
+            raise ValueError(f"{self.key} reads sum_in(r, mod) but its connectome has no modulatory edges")
         if self.labels is None:
             self.labels = label_map(self.root)
         return ResponseModel(self.program, self.connectome, data.pairs, self.labels, data.dt)

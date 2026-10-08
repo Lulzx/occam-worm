@@ -1,0 +1,21 @@
+# gap-leak-np with a slow peptide register: the neuropeptide drive is low-pass filtered with its own time constant
+# tau_np before it reaches v, for signalling slower than synaptic transmission.
+wrl 0.1
+rule gap_leak_np_slow
+tier G1
+
+state v : 1 = 0
+state p : 1 = 0
+param tau : s = 0.5 in [0.01, 10] trainable bits 12
+param g_scale : 1 = 1.0 in [0, 10] trainable bits 10
+param g_np : 1 = 0.0 in [-2, 2] trainable bits 10
+param tau_np : s = 5.0 in [0.1, 60] trainable bits 12
+
+input u = stimulus
+input chem = sum_in(v, all)
+input pep = sum_in(v, mod)
+next p = leaky_integrate(p, pep, tau_np)
+next v = leaky_integrate(v, u + chem + g_np * p, tau)
+gap v scale g_scale
+
+observe identity_v1(v)

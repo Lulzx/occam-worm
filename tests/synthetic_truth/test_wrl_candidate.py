@@ -22,7 +22,7 @@ from occamworm.search.wrl import (
     gate_structure,
     search_volume,
 )
-from occamworm.sim.graph import ChemicalEdge, GraphSpec, build_graph
+from occamworm.sim.graph import ChemicalEdge, GraphSpec, ModulatoryEdge, build_graph
 from occamworm.sim.ir import compile_source, find_ow
 
 pytestmark = pytest.mark.skipif(find_ow(required=False) is None, reason="the ow binary is not built")
@@ -117,3 +117,35 @@ def test_search_volume_and_budget_curve() -> None:
 
     curve = budget_curve([InnerResult(f"c{k}", 0, float(v), {}, 1, 0, 0, 0) for k, v in enumerate([5, 3, 4, 1])])
     assert curve["enumeration"] == [5, 3, 3, 1] and curve["random_mean"][-1] == 1
+
+
+MOD_SOURCE = (
+    SOURCE.replace("rule chem_leak", "rule mod_leak")
+    .replace("input chem = sum_in(v, all)", "input chem = sum_in(v, mod)")
+    .replace("in [0, 5]", "in [-5, 5]")
+)
+MOD_TRUTH = {"tau": 2.0, "gain": -0.6}
+
+
+def test_modulatory_gain_and_sign_are_recovered() -> None:
+    """A rule on modulatory edges only: the unsigned edges get their sign from the fitted gain."""
+    spec = CONN.spec
+    mods = tuple(ModulatoryEdge(e.pre, e.post, e.weight) for e in spec.chemical)
+    mspec = GraphSpec(spec.neurons, (), (), mods)
+    conn = Connectome(mspec, build_graph(mspec), {"synthetic": True})
+    program = compile_source(MOD_SOURCE)
+    pairs = [(f"T{j}", f"R{j}_{i}") for j in range(SPEC.n_targets) for i in range(SPEC.n_responders)]
+    model = ResponseModel(program, conn, pairs, LABELS, SPEC.dt)
+    c = model.dense(program.theta_from_dict(MOD_TRUTH))
+    assert np.all(c.reshape(SPEC.n_targets, SPEC.n_responders, -1)[:, :-1].min(axis=2) < 0)
+    lags = np.arange(POST)
+    k = np.stack([np.interp(lags, KERNEL_KNOTS, row) for row in c]).reshape(SPEC.n_targets, SPEC.n_responders, POST)
+    data, _ = generate(SPEC, k)
+    ps = aggregate(compute_stats(data, trial_designs(data, None)), np.ones(len(data.animals), dtype=bool), len(pairs))
+    fit = fit_program(model, ps, starts=2, seed=0)
+    theta = dict(zip([p.source_name for p in program.parameters], fit.extra["theta"], strict=True))
+    assert theta["gain"] == pytest.approx(MOD_TRUTH["gain"], rel=0.1)
+    assert theta["tau"] == pytest.approx(MOD_TRUTH["tau"], rel=0.1)
+    no_mod = WrlCandidate(MOD_SOURCE, ROOT, name="mod_leak", connectome=CONN, labels=LABELS)
+    with pytest.raises(ValueError, match="no modulatory edges"):
+        no_mod._model(data)

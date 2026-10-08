@@ -24,9 +24,16 @@ def run(root: Path, cfg_path: Path, out: Path) -> Path:
     from occamworm.search.candidates import Candidate, InnerResult, KernelCandidate
     from occamworm.search.locked import read_selection
     from occamworm.search.nested import run_fold
-    from occamworm.search.wrl import WrlCandidate, budget_curve, enumerate_programs, search_volume
+    from occamworm.search.wrl import (
+        WrlCandidate,
+        budget_curve,
+        enumerate_programs,
+        load_connectome,
+        search_volume,
+    )
 
     cfg = json.loads(cfg_path.read_text())
+    rules = [r if isinstance(r, dict) else {"path": r} for r in cfg["rules"]]
     exp = load_experiment(root)
     ds = dataset_dir(root, exp["data"]["dataset"])
     split_path = root / exp["splits"]["split"]
@@ -36,7 +43,7 @@ def run(root: Path, cfg_path: Path, out: Path) -> Path:
         {
             "kind": "nested_search",
             "search_config_sha256": file_sha256(cfg_path),
-            "rules_sha256": {r: file_sha256(root / r) for r in cfg["rules"]},
+            "rules_sha256": {r["path"]: file_sha256(root / r["path"]) for r in rules},
             "enumeration_config_sha256": file_sha256(root / cfg["enumerate"]["config"]),
             "dataset_manifest_sha256": file_sha256(ds / "manifest.json"),
             "eligibility_sha256": file_sha256(root / exp["data"]["eligibility"]),
@@ -49,7 +56,12 @@ def run(root: Path, cfg_path: Path, out: Path) -> Path:
     split = read_split(split_path)
     kw = {"starts": cfg["starts"], "seed": cfg["seed"]}
     cands: list[Candidate] = [KernelCandidate(f, float(b)) for f, b in cfg["kernel_families"].items()]
-    cands += [WrlCandidate((root / r).read_text(), root, name=Path(r).stem, **kw) for r in cfg["rules"]]
+    for r in rules:
+        conn = None
+        if "modulatory" in r:
+            conn = load_connectome(root, modulatory=r["modulatory"], shuffle_seed=r.get("shuffle_seed"))
+        name = r.get("name", Path(r["path"]).stem)
+        cands.append(WrlCandidate((root / r["path"]).read_text(), root, name=name, connectome=conn, **kw))
     en = cfg["enumerate"]
     kept, volume = search_volume(enumerate_programs(root / en["config"], en["limit"]), root, **kw)
     cands += kept[: en["max_kept"]]
