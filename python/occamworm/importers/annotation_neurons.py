@@ -70,7 +70,7 @@ _TRANSMITTER_WORDS = {
 def normalize_transmitter(raw: str) -> list[str]:
     """Transmitter tokens of a Wang 2024 entry: ``*Glu - NEW`` -> Glu, ``GABA (uptake)`` -> GABA_uptake."""
     out: list[str] = []
-    for part in raw.split(","):
+    for part in re.split(r",(?![^()]*\))", raw):  # commas inside parentheses stay
         s = re.sub(r"\s*-\s*NEW\b", "", part, flags=re.IGNORECASE)
         s = re.sub(r"\(new\)", "", s, flags=re.IGNORECASE).replace("*", "").strip().lower()
         if not s:
