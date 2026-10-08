@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
-import tempfile
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -14,9 +12,10 @@ import pytest
 
 from occamworm.sim import jaxsim, reference
 from occamworm.sim.cases import Case, load_suite
+from occamworm.sim.cpp import simulate_cpp
 from occamworm.sim.graph import SimInput, sim_input_from_json
 from occamworm.sim.ir import Program, compile_source, find_ow
-from occamworm.sim.result import SimResult, result_from_json
+from occamworm.sim.result import SimResult
 
 SUITE_DIR = Path(__file__).parent
 IR_CACHE = SUITE_DIR / "ir_cache"
@@ -56,22 +55,8 @@ def update_cache_requested() -> bool:
 
 
 def cpp_run(source: str, raw_input: Mapping[str, Any]) -> SimResult:
-    """``ow sim run`` on a program source and a simulation input, parsed into a :class:`SimResult`."""
-    assert OW is not None
-    with tempfile.TemporaryDirectory() as tmp:
-        wrl = Path(tmp) / "p.wrl"
-        wrl.write_text(source)
-        case = Path(tmp) / "case.json"
-        case.write_text(json.dumps({"input": raw_input}))
-        out = Path(tmp) / "out.json"
-        proc = subprocess.run(
-            [str(OW), "sim", "run", "--program", str(wrl), "--case", str(case), "--out", str(out)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert proc.returncode == 0, proc.stderr
-        return result_from_json(json.loads(out.read_text()))
+    """``ow sim run`` on a program source and a simulation input."""
+    return simulate_cpp(source, raw_input, OW)
 
 
 def case_runs(case: Case) -> list[tuple[str, dict[str, Any]]]:
