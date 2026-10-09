@@ -32,6 +32,7 @@ pytest
 
 - [Spec summary](docs/SUMMARY.md) · [full spec index](docs/README.md)
 - [Roadmap](docs/planning/ROADMAP.md) · [tickets](docs/planning/tickets/README.md)
+- [Progress report, 2026-10-09 (PDF)](docs/reports/occam-worm-progress-2026-10-09.pdf)
 - [Data acquisition](docs/data/ACQUISITION.md) · [Randi 2023 import](docs/data/RANDI2023_IMPORT.md) · [Annotations](docs/data/ANNOTATIONS.md)
 - [WRL syntax and IR](docs/language/WRL_SYNTAX.md) · [C++ build and test](docs/engineering/REPRODUCIBILITY.md#local-build-and-test)
 
