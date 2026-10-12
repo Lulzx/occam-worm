@@ -2,9 +2,10 @@
 
 For each task (T2a, T2b) and history variant, every outer fold of the frozen split is evaluated by
 ``evaluate_fold`` for every family. Folds run in worker processes; each worker rebuilds the task data once.
-In T2b the indicator is re-estimated in every outer fold from that fold's training autoresponses, so the design
-(and the statistics) are fold-specific. Results are appended to ``folds.jsonl`` one line per (config, fold,
-family), so an interrupted run resumes where it stopped.
+In T2b the indicator is either fixed by the experiment config (published kinetics) or re-estimated in every outer
+fold from that fold's training autoresponses; in the second case the design (and the statistics) are
+fold-specific. Results are appended to ``folds.jsonl`` one line per (config, fold, family), so an interrupted run
+resumes where it stopped.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from occamworm.analysis.provenance import file_sha256, git_revision, write_run_m
 from occamworm.analysis.splits import Split, read_split
 from occamworm.baselines.data import Stats, TaskData, build_task, compute_stats, trial_designs
 from occamworm.baselines.evaluate import Fitter, FoldResult, evaluate_fold, make_fitter, rows_of
-from occamworm.baselines.indicator import Indicator, estimate_from_autoresponses
+from occamworm.baselines.indicator import Indicator, configured_indicator, estimate_from_autoresponses
 
 FloatArray = npt.NDArray[np.float64]
 BoolArray = npt.NDArray[np.bool_]
@@ -89,9 +90,10 @@ def _init_worker(root: str, exp: dict[str, Any], cfg: Config) -> None:
     w = load_windows(dataset_dir(r, exp["data"]["dataset"]))
     data = build_task(w, eligible_targets(r, exp), cfg.task, cfg.history)
     _STATE.clear()
-    _STATE.update(root=r, exp=exp, cfg=cfg, data=data, split=read_split(r / exp["splits"]["split"]))
-    if cfg.task == "T2a":
-        designs = trial_designs(data)
+    fixed = configured_indicator(exp) if cfg.task == "T2b" else None
+    _STATE.update(root=r, exp=exp, cfg=cfg, data=data, split=read_split(r / exp["splits"]["split"]), indicator=fixed)
+    if cfg.task == "T2a" or fixed is not None:
+        designs = trial_designs(data, fixed)
         _STATE.update(designs=designs, stats=compute_stats(data, designs))
 
 
@@ -131,13 +133,15 @@ def _run_fold(i: int, families: tuple[str, ...]) -> list[dict[str, Any]]:
     if not test.any():
         return [{"config": cfg.key, "fold": i, "skipped": "test animal has no eligible traces"}]
     extra: dict[str, Any] = {}
-    if cfg.task == "T2b":
+    ind: Indicator | None = _STATE["indicator"]
+    if cfg.task == "T2b" and ind is None:
         ind = fold_indicator(data, train)
         designs = trial_designs(data, ind)
         stats: Stats = compute_stats(data, designs)
-        extra["indicator"] = ind.to_json()
     else:
         designs, stats = _STATE["designs"], _STATE["stats"]
+    if ind is not None:
+        extra["indicator"] = ind.to_json()
     scored = np.unique(data.trace_trial[rows_of(data, test)])
     extra["test_animals"] = [data.animals[a] for a in np.nonzero(test)[0]]
     extra["test_trials"] = [data.trial_ids[k] for k in scored]

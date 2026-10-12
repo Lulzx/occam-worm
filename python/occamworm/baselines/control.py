@@ -1,7 +1,8 @@
 """Indicator-kinetics control (§4.5, OW-005/OW-006).
 
-1. Indicator impulse response from autoresponses, with an animal-level bootstrap, plus the per-fold estimates the
-   T2b benchmark actually used (training animals only).
+1. Indicator impulse response: the published kinetics fixed by the experiment config, with their published range
+   as the uncertainty, or else the fit to autoresponses with an animal-level bootstrap. The autoresponse fit is
+   reported either way, with the per-fold indicators the T2b benchmark actually used.
 2. Resolvable kernel bandwidth from that indicator and the noise fitted by B0.
 3. Shared (B1) kernel timescales in T2b next to the indicator's.
 4. False-sharing rate: synthetic data with *distinct* pair kernels behind the estimated indicator and the measured
@@ -24,7 +25,12 @@ from occamworm.analysis.dataset import PRE, dataset_dir, load_windows
 from occamworm.baselines.benchmark import eligible_targets, load_experiment
 from occamworm.baselines.data import KERNEL_BASIS, aggregate, build_task, compute_stats, trial_designs
 from occamworm.baselines.evaluate import evaluate_fold, grouped_inner
-from occamworm.baselines.indicator import Indicator, estimate_from_autoresponses, resolvable_bandwidth
+from occamworm.baselines.indicator import (
+    Indicator,
+    configured_indicator,
+    estimate_from_autoresponses,
+    resolvable_bandwidth,
+)
 from occamworm.baselines.kernels import fit_shared
 from occamworm.baselines.summary import load_rows
 from occamworm.baselines.synthetic import SyntheticSpec, generate
@@ -42,6 +48,37 @@ def _timescales(kernel: FloatArray, dt: float) -> dict[str, float | None]:
     p = int(np.argmax(k))
     after = np.nonzero(k[p:] <= 0.5 * k[p])[0]
     return {"peak_s": p * dt, "half_decay_s": float(after[0] * dt) if after.size else None}
+
+
+def _published_half_decay_range(p: dict[str, Any], n: int, dt: float) -> tuple[float, float]:
+    """Half-decay range of the kernel over the corners of the published (tau_r, tau_d) ranges.
+
+    The half-decay grows with both time constants, so the extremes sit at the corners.
+    """
+    decays = [
+        _timescales(Indicator(tr, td).kernel(n, dt), dt)["half_decay_s"] or np.nan
+        for tr in p["tau_r_range_s"]
+        for td in p["tau_d_range_s"]
+        if tr < td
+    ]
+    return float(np.nanmin(decays)), float(np.nanmax(decays))
+
+
+def _bootstrap_half_decay(
+    traces: FloatArray, animals: list[str], n: int, dt: float, seed: int, reps: int = 100
+) -> tuple[float, float]:
+    """95% animal-bootstrap interval of the autoresponse-fitted indicator's half-decay."""
+    boot = []
+    rng = np.random.default_rng(seed)
+    uniq = sorted(set(animals))
+    an = np.asarray(animals, dtype=object)
+    for _ in range(reps):
+        pick = set(rng.choice(uniq, len(uniq)))
+        sel = np.array([a in pick for a in an])
+        e = estimate_from_autoresponses(traces[sel], np.ones_like(traces[sel], dtype=bool), list(an[sel]), dt, reps=0)
+        boot.append(_timescales(e["indicator"].kernel(n, dt), dt)["half_decay_s"] or np.nan)
+    lo, hi = np.nanquantile(boot, [0.025, 0.975])
+    return float(lo), float(hi)
 
 
 def false_sharing_rate(
@@ -99,7 +136,8 @@ def run_control(root: Path, out: Path, replicates: int | None = None) -> dict[st
     traces = data.trial_auto[ok, PRE:]
     animals = [data.animals[a] for a in data.trial_animal[ok]]
     est = estimate_from_autoresponses(traces, np.ones_like(traces, dtype=bool), animals, data.dt, reps=200)
-    ind: Indicator = est["indicator"]
+    fixed = configured_indicator(exp)
+    ind: Indicator = fixed or est["indicator"]
     rows = load_rows(out / "folds.jsonl") if (out / "folds.jsonl").exists() else []
     fold_inds = [
         r["indicator"] for r in rows if r.get("family") == "B0" and r.get("task") == "T2b" and "indicator" in r
@@ -136,18 +174,10 @@ def run_control(root: Path, out: Path, replicates: int | None = None) -> dict[st
         kern_rows.append(
             {"target": target, "neural": _timescales(neural, data.dt), "observed": _timescales(observed, data.dt)}
         )
-    boot = []
-    rng = np.random.default_rng(int(ctl["false_sharing_seed"]))
-    uniq = sorted(set(animals))
-    an = np.asarray(animals, dtype=object)
-    for _ in range(100):
-        pick = set(rng.choice(uniq, len(uniq)))
-        sel = np.array([a in pick for a in an])
-        e = estimate_from_autoresponses(
-            traces[sel], np.ones_like(traces[sel], dtype=bool), list(an[sel]), data.dt, reps=0
-        )
-        boot.append(_timescales(e["indicator"].kernel(lags.size, data.dt), data.dt)["half_decay_s"] or np.nan)
-    lo, hi = np.nanquantile(boot, [0.025, 0.975])
+    if fixed is not None:
+        lo, hi = _published_half_decay_range(exp["indicator"], lags.size, data.dt)
+    else:
+        lo, hi = _bootstrap_half_decay(traces, animals, lags.size, data.dt, int(ctl["false_sharing_seed"]))
     obs_decay = [k["observed"]["half_decay_s"] for k in kern_rows if k["observed"]["half_decay_s"] is not None]
     differs = float(np.mean([(d < lo) or (d > hi) for d in obs_decay])) if obs_decay else None
 
@@ -159,18 +189,33 @@ def run_control(root: Path, out: Path, replicates: int | None = None) -> dict[st
     ]
     threshold = float(ctl["false_sharing_threshold"])
     low = all(f["false_sharing_rate"] <= threshold for f in fs)
+    fitted = {
+        **est["indicator"].to_json(),
+        "amplitude": est["amplitude"],
+        "n_traces": est["n_traces"],
+        "n_animals": est["n_animals"],
+        "tau_r_ci95": est["tau_r_ci95"],
+        "tau_d_ci95": est["tau_d_ci95"],
+        "interpretation": est["interpretation"],
+    }
+    if fixed is not None:
+        pub = exp["indicator"]
+        used = {
+            **ind.to_json(),
+            "tau_r_range_s": pub["tau_r_range_s"],
+            "tau_d_range_s": pub["tau_d_range_s"],
+            "source": pub["source"],
+            "interpretation": f"published kinetics, fixed ({pub['sensor']})",
+        }
+    else:
+        used = fitted
     result = {
         "indicator": {
-            **ind.to_json(),
-            "amplitude": est["amplitude"],
-            "n_traces": est["n_traces"],
-            "n_animals": est["n_animals"],
-            "tau_r_ci95": est["tau_r_ci95"],
-            "tau_d_ci95": est["tau_d_ci95"],
-            "interpretation": est["interpretation"],
+            **used,
             "timescales": ind_ts,
-            "half_decay_ci95": [float(lo), float(hi)],
+            "half_decay_ci95": [lo, hi],
         },
+        "autoresponse_fit": fitted,
         "fold_indicators": {
             "n": len(fold_inds),
             "tau_r_s": [

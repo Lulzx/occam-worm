@@ -146,3 +146,25 @@ def test_indicator_fit_survives_near_alpha_responses() -> None:
         tau = rng.uniform(3, 40)
         fit, amp = fit_to_mean_response((t / tau) * np.exp(1 - t / tau) + rng.normal(0, 0.02, t.size), dt)
         assert 0 < fit.tau_r < fit.tau_d and np.isfinite(amp)
+
+
+def test_configured_indicator_follows_the_experiment_stage() -> None:
+    from occamworm.baselines.indicator import Indicator, configured_indicator
+
+    pub = {"tau_r_s": 0.3, "tau_d_s": 2.0}
+    assert configured_indicator({"observation": {"indicator_stage": "published"}, "indicator": pub}) == Indicator(
+        0.3, 2.0
+    )
+    assert configured_indicator({"observation": {"indicator_stage": "separate_fitted"}}) is None
+    with pytest.raises(ValueError):
+        configured_indicator({"observation": {"indicator_stage": "guess"}})
+
+
+def test_published_half_decay_range_brackets_the_central_kernel() -> None:
+    from occamworm.baselines.control import _published_half_decay_range, _timescales
+    from occamworm.baselines.indicator import Indicator
+
+    dt, n = 0.1, 400
+    lo, hi = _published_half_decay_range({"tau_r_range_s": [0.1, 0.5], "tau_d_range_s": [1.0, 4.0]}, n, dt)
+    mid = _timescales(Indicator(0.3, 2.0).kernel(n, dt), dt)["half_decay_s"]
+    assert mid is not None and lo < mid < hi

@@ -1,8 +1,11 @@
 # Shared-timescale baseline benchmark (§4, §14.6). Read by `python -m occamworm.baselines benchmark`.
 # Frozen 2026-10-08 before any outer fold was scored; changes require a new experiment name.
+# v2 (2026-10-12): the T2b indicator uses published GCaMP6s kinetics ([indicator]) instead of a per-fold fit to
+# autoresponses, which came out at the alpha limit with tau ~ 11.5 s (an effective stimulus-to-calcium response,
+# not the sensor). No T2b outer fold had been scored. T2a is unaffected and stays the v1 run (f0de9f4).
 
 [experiment]
-name = "shared-timescales-wt-v1"
+name = "shared-timescales-wt-v2"
 question = "Do shared response timescales generalize across animals?"
 primary_condition = "wild-type"
 primary_metric = "animal_paired_predictive_nll_difference"
@@ -34,8 +37,24 @@ b1d_delays_volumes = [-2, -1, 0, 1, 2]
 family = "gaussian_ar1"
 fit_noise_on = "training_only"
 allow_test_specific_scale_calibration = false
-indicator_stage = "separate_fitted"   # difference of exponentials from training-fold autoresponses (T2b)
+indicator_stage = "published"   # fixed GCaMP6s kinetics below; the autoresponse fit is reported as a diagnostic
 indicator_control = true
+
+[indicator]
+# Difference of exponentials (s). No direct measurement exists for nuclear GCaMP6s in C. elegans; the central values
+# extrapolate from the sources below, and the ranges are the uncertainty used by the §4.5 control.
+# - Chen et al. 2013, Nature 499:295: spikes resolvable at intervals of the sensor rise time, 100-150 ms for GCaMP6s
+#   (mouse V1, 37 C); the floor of tau_r.
+# - Helassa et al. 2016, Sci Rep 6:38276: purified GCaMP6s Ca2+-dissociation t1/2 769 ms at 20 C, 346 ms at 37 C.
+# - Ding et al. 2023, G3 13:jkad183: cytosolic GCaMP6s in C. elegans ALM, decay tau 8.4 +/- 5.0 s after a 3-s touch
+#   train (includes Ca2+ clearance); the ceiling of tau_d.
+# Nuclear localization, ~20 C imaging and 0.5 s volumes (Randi et al. 2023) all slow the effective response.
+sensor = "GCaMP6s, nuclear-localized (AML462)"
+source = "Chen 2013; Helassa 2016; Ding 2023 (extrapolated, see config comments)"
+tau_r_s = 0.4
+tau_r_range_s = [0.15, 1.0]
+tau_d_s = 2.5
+tau_d_range_s = [1.0, 8.4]
 
 [indicator_control]
 # Open decision 14: a false-sharing rate at or below this value counts as low.

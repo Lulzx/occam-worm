@@ -6,10 +6,13 @@ The indicator impulse response is a difference of exponentials with peak 1:
 
 with an optional saturating readout ``H(c) = c / (1 + c / c_sat)``.
 
-Estimating it from autoresponses: the stimulated neuron's trace is the indicator filter applied to that neuron's
-own (unknown) activity. Treating that activity as a pulse at the stimulation frame gives the slowest indicator
-consistent with the data, i.e. an upper bound on indicator time constants; the report labels it so. No published
-kinetic constant is used yet (audit: ``indicator.published_kinetics``).
+The experiment config chooses the indicator (``observation.indicator_stage``):
+
+* ``"published"``: fixed sensor kinetics from the literature (``[indicator]``), the same in every fold.
+* ``"separate_fitted"``: estimated from autoresponses. The stimulated neuron's trace is the indicator filter applied
+  to that neuron's own (unknown) activity. Treating that activity as a pulse at the stimulation frame gives the
+  slowest indicator consistent with the data, i.e. an upper bound on indicator time constants; the report labels it
+  so. The published stage still reports this fit as a diagnostic.
 """
 
 from __future__ import annotations
@@ -55,6 +58,17 @@ class Indicator:
             "tau_d_s": self.tau_d,
             "c_sat": self.c_sat,
         }
+
+
+def configured_indicator(exp: dict[str, Any]) -> Indicator | None:
+    """The experiment's fixed indicator, or None when it is fitted per fold from training autoresponses."""
+    stage = exp["observation"]["indicator_stage"]
+    if stage == "separate_fitted":
+        return None
+    if stage != "published":
+        raise ValueError(f"unknown indicator_stage {stage!r}")
+    p = exp["indicator"]
+    return Indicator(float(p["tau_r_s"]), float(p["tau_d_s"]))
 
 
 def difference_of_exponentials(t: npt.ArrayLike, tau_r: float, tau_d: float) -> FloatArray:
