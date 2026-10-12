@@ -159,26 +159,41 @@ def estimate_from_autoresponses(
 
 
 def resolvable_bandwidth(
-    ind: Indicator, signal_amplitude: float, sigma: float, phi: float, dt: float
+    ind: Indicator,
+    signal_amplitude: float,
+    sigma: float,
+    phi: float,
+    dt: float,
+    n_trials: float = 1.0,
+    n_window: int = 1,
 ) -> dict[str, Any]:
-    """Highest frequency at which a kernel component of the given amplitude stays above the noise (§4.5 step 2).
+    """Highest frequency at which a kernel component of the given amplitude is detectable (§4.5 step 2).
 
-    SNR(f) = (A |H(f)| / |H(0)|)^2 / S(f), with H the indicator transfer function and S the AR(1) noise spectrum
-    normalized to the per-sample variance sigma^2: S(f) = sigma^2 (1 - phi^2) / |1 - phi e^{-i 2 pi f dt}|^2.
-    The resolvable bandwidth is the largest f <= Nyquist with SNR(f) >= 1; 1 / (2 pi f) is the matching timescale.
+    A component A cos(2 pi f t) of the neural kernel reaches the trace as A |H(f)| cos(...), with |H(f)| the
+    indicator gain (|H(0)| = 1). Over a kernel window of ``n_window`` samples, seen in ``n_trials`` independent trials
+    under AR(1) noise of per-sample variance sigma^2, its matched-filter SNR is
+
+        SNR(f) = n_trials * n_window * c (A |H(f)|)^2 / S(f),   c = 1/2 for f > 0 (sinusoid power), 1 at f = 0,
+
+    with S(f) = sigma^2 (1 - phi^2) / |1 - phi e^{-i 2 pi f dt}|^2. The resolvable bandwidth is the largest f <= Nyquist
+    with SNR(f) >= 1, and 1 / (2 pi f) is the matching timescale. It is an upper bound: a real kernel component decays
+    within the window instead of persisting over all of it.
     """
     f = np.linspace(0.0, 0.5 / dt, 2001)
     w = 2 * np.pi * f
     gain = 1.0 / np.sqrt((1 + (w * ind.tau_r) ** 2) * (1 + (w * ind.tau_d) ** 2))
     noise = sigma**2 * (1 - phi**2) / np.abs(1 - phi * np.exp(-1j * w * dt)) ** 2
-    snr = (signal_amplitude * gain) ** 2 / noise
+    snr = n_trials * n_window * np.where(f > 0, 0.5, 1.0) * (signal_amplitude * gain) ** 2 / noise
     ok = np.nonzero(snr >= 1.0)[0]
     f_res = float(f[ok[-1]]) if ok.size else 0.0
     return {
         "f_resolvable_hz": f_res,
         "timescale_s": (1.0 / (2 * np.pi * f_res)) if f_res > 0 else None,
         "nyquist_hz": float(0.5 / dt),
+        "snr_at_zero_hz": float(snr[0]),
         "signal_amplitude": signal_amplitude,
         "noise_sigma": sigma,
         "noise_phi": phi,
+        "n_trials": n_trials,
+        "n_window": n_window,
     }

@@ -3,7 +3,8 @@
 1. Indicator impulse response: the published kinetics fixed by the experiment config, with their published range
    as the uncertainty, or else the fit to autoresponses with an animal-level bootstrap. The autoresponse fit is
    reported either way, with the per-fold indicators the T2b benchmark actually used.
-2. Resolvable kernel bandwidth from that indicator and the noise fitted by B0.
+2. Resolvable kernel bandwidth from that indicator, the noise fitted by B0 and the typical responsive pair (median
+   amplitude and trial count over the kernel window); with published kinetics, also at the slow corner of their range.
 3. Shared (B1) kernel timescales in T2b next to the indicator's.
 4. False-sharing rate: synthetic data with *distinct* pair kernels behind the estimated indicator and the measured
    noise, run through the same nested evaluation; the rate is how often B1 or a B2 bank wins on held-out animals.
@@ -152,8 +153,15 @@ def run_control(root: Path, out: Path, replicates: int | None = None) -> dict[st
     s = data.s[data.s > 0]
     sigma_typ = float(np.median(np.sqrt(noise_a**2 * s**2 + noise_b**2)))
     pairs = pq.read_table(root / exp["data"]["eligibility"].replace("target_eligibility", "pair_coverage")).to_pylist()
-    amp = float(np.median([abs(p["mean_amplitude"]) for p in pairs if abs(p["t_statistic"] or 0) >= 3]))
-    bandwidth = resolvable_bandwidth(ind, amp, sigma_typ, noise_phi, data.dt)
+    responsive = [p for p in pairs if abs(p["t_statistic"] or 0) >= 3]
+    amp = float(np.median([abs(p["mean_amplitude"]) for p in responsive]))
+    n_trials = float(np.median([p["n_trials"] for p in responsive]))
+    bandwidth = resolvable_bandwidth(ind, amp, sigma_typ, noise_phi, data.dt, n_trials, KERNEL_BASIS.shape[0])
+    if fixed is not None:
+        slow = Indicator(max(exp["indicator"]["tau_r_range_s"]), max(exp["indicator"]["tau_d_range_s"]))
+        bandwidth["slow_corner"] = resolvable_bandwidth(
+            slow, amp, sigma_typ, noise_phi, data.dt, n_trials, KERNEL_BASIS.shape[0]
+        )
 
     # shared kernels in T2b (descriptive: all animals, most frequently selected ridge)
     lam_rel = 10.0

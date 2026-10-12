@@ -105,6 +105,21 @@ def test_resolvable_bandwidth_shrinks_with_noise() -> None:
     assert quiet > noisy
 
 
+def test_resolvable_bandwidth_integrates_window_and_trials() -> None:
+    """White noise: SNR(0) = n N A^2 / sigma^2; more trials, a longer window or a faster indicator widen the band."""
+    ind, dt = Indicator(0.4, 2.5), 0.5
+    r = resolvable_bandwidth(ind, 0.07, 0.2, 0.0, dt, n_trials=2, n_window=60)
+    assert r["snr_at_zero_hz"] == pytest.approx(2 * 60 * 0.07**2 / 0.2**2)
+    # at f_res the SNR crosses 1: 2 * 60 * 0.5 * (A |H|)^2 / sigma^2 = 1
+    w = 2 * np.pi * r["f_resolvable_hz"]
+    gain2 = 1 / ((1 + (w * 0.4) ** 2) * (1 + (w * 2.5) ** 2))
+    assert 60 * 0.07**2 * gain2 / 0.2**2 == pytest.approx(1.0, rel=0.02)
+    assert resolvable_bandwidth(ind, 0.07, 0.2, 0.0, dt)["f_resolvable_hz"] == 0.0
+    more = resolvable_bandwidth(ind, 0.07, 0.2, 0.0, dt, n_trials=10, n_window=60)["f_resolvable_hz"]
+    slow = resolvable_bandwidth(Indicator(1.0, 8.0), 0.07, 0.2, 0.0, dt, n_trials=2, n_window=60)["f_resolvable_hz"]
+    assert slow < r["f_resolvable_hz"] < more
+
+
 def test_paired_difference_resamples_animals() -> None:
     base = {f"a{i}": 10.0 + i for i in range(30)}
     cand = {f"a{i}": 9.0 + i for i in range(30)}
