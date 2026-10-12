@@ -1,0 +1,18 @@
+{
+  "name": "recovery-g1",
+  "tier": "G1",
+  "max_nodes": 6,
+  "max_depth": 4,
+  "max_registers": 1,
+  "max_parameters": 2,
+  "ops": ["add", "mul", "leaky_integrate", "stimulus", "sum_in", "param"],
+  "constants": [1],
+  "tau_constants": [],
+  "sum_in_selects": ["exc", "inh"],
+  "parameters": [
+    { "unit": "1", "lower": 0, "upper": 2, "bits": 8 },
+    { "unit": "s", "lower": 0.1, "upper": 5, "bits": 8 }
+  ],
+  "dt_max": 0.05,
+  "register_init": [0]
+}

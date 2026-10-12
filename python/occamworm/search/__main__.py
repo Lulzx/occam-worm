@@ -13,6 +13,7 @@ from occamworm.sources.cli import find_root
 
 for _var in ("VECLIB_MAXIMUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_var, "1")
+os.environ.setdefault("XLA_FLAGS", "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1")
 
 
 def run(root: Path, cfg_path: Path, out: Path) -> Path:
@@ -153,8 +154,30 @@ def main(argv: list[str] | None = None) -> int:
     m = sub.add_parser("summarize", help="Markdown summary of a finished search run")
     m.add_argument("--out", type=Path, required=True, help="the run directory")
     m.add_argument("--publish", type=Path, help="also write the summary here (e.g. docs/evaluation/...)")
+    c = sub.add_parser("recovery", help="synthetic truth recovery, misspecification and strategy comparison (M3 gate)")
+    c.add_argument("--config", type=Path, required=True)
+    c.add_argument("--out", type=Path, help="default: artifacts/recovery-<config name>")
+    c.add_argument("--workers", type=int, default=2, help="worker processes (cells are independent; default 2)")
+    c.add_argument("--summarize-only", action="store_true", help="only rebuild summary.md from cells.jsonl")
+    c.add_argument("--publish", type=Path, help="also write the summary here")
     args = ap.parse_args(argv)
     root = find_root(Path.cwd())
+    if args.cmd == "recovery":
+        from occamworm.search import recovery
+
+        cfg_path = args.config.resolve()
+        out = (
+            args.out
+            or root / "artifacts" / f"recovery-{json.loads(cfg_path.read_text())['name'].removeprefix('recovery-')}"
+        )
+        if not args.summarize_only:
+            recovery.run(root, cfg_path, out, args.workers)
+        text = recovery.summarize(out)
+        (out / "summary.md").write_text(text)
+        if args.publish:
+            args.publish.write_text(text)
+        print(out / "summary.md")
+        return 0
     if args.cmd == "summarize":
         text = summarize(args.out)
         (args.out / "summary.md").write_text(text)
