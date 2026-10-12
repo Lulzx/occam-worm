@@ -59,17 +59,24 @@ def residuals(data: TaskData, designs: FloatArray, fit: Fit, rows: IntArray) -> 
     return data.y[rows].astype(np.float64) - mu, data.m[rows]
 
 
-def noise_for(data: TaskData, designs: FloatArray, fit: Fit, rows: IntArray, n: int = NOISE_TRACES) -> NoiseModel:
+def noise_for(
+    data: TaskData,
+    designs: FloatArray,
+    fit: Fit,
+    rows: IntArray,
+    n: int = NOISE_TRACES,
+    family: str = "gaussian_ar1",
+) -> NoiseModel:
     sub = _subsample(rows, n)
     e, v = residuals(data, designs, fit, sub)
-    return fit_noise(e, v, data.s[sub])
+    return fit_noise(e, v, data.s[sub], family=family)
 
 
 def score_rows(
     data: TaskData, designs: FloatArray, fit: Fit, noise: NoiseModel, rows: IntArray
 ) -> tuple[FloatArray, FloatArray, BoolArray]:
     e, v = residuals(data, designs, fit, rows)
-    return ar1_nll(e, v, noise.sigma(data.s[rows]), noise.phi), e, v
+    return ar1_nll(e, v, noise.sigma(data.s[rows]), noise.phi, noise.nu), e, v
 
 
 def make_fitter(data: TaskData, family: str) -> Fitter:
@@ -89,6 +96,7 @@ def evaluate_fold(
     family: str,
     fitter: Fitter | None = None,
     lam_grid: Sequence[float] = LAM_GRID,
+    noise_family: str = "gaussian_ar1",
 ) -> FoldResult:
     """Inner-loop ridge selection, outer refit, single scoring of the held-out animals."""
     if np.any(train & test):
@@ -111,14 +119,14 @@ def evaluate_fold(
         for lam, f in fits.items():
             # Each ridge value is scored with the noise fitted on its own training residuals, exactly as the
             # outer refit is; one shared noise model would favour whichever ridge value it was fitted on.
-            noise = noise_for(data, designs, f, trows_inner, INNER_NOISE_TRACES)
+            noise = noise_for(data, designs, f, trows_inner, INNER_NOISE_TRACES, noise_family)
             nll, _, _ = score_rows(data, designs, f, noise, vrows)
             inner_scores[lam] += float(nll.sum())
         last_inner = fits
     lam_best = min(grid, key=lambda lam: (inner_scores[lam], lam))
     ps = aggregate(stats, train, n_pairs)
     fit = fitter(ps, lam_best, last_inner.get(lam_best))
-    noise = noise_for(data, designs, fit, rows_of(data, train))
+    noise = noise_for(data, designs, fit, rows_of(data, train), family=noise_family)
     trows = rows_of(data, test)
     nll, e, v = score_rows(data, designs, fit, noise, trows)
     animals = np.asarray(data.animals, dtype=object)[data.trace_animal[trows]]
@@ -140,7 +148,7 @@ def evaluate_fold(
         animal_traces=animal_traces,
         animal_samples=animal_samples,
         mse=mse,
-        coverage=interval_coverage(e, v, noise.sigma(data.s[trows])) if trows.size else {},
+        coverage=interval_coverage(e, v, noise.sigma(data.s[trows]), nu=noise.nu) if trows.size else {},
         n_params=fit.n_params,
         fit_extra=extra,
     )
