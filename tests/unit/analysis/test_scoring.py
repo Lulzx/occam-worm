@@ -133,3 +133,16 @@ def test_noise_objective_matches_ar1_nll_and_its_gradient() -> None:
         d[k] = 1e-6
         num = (noise_objective(x + d, flat, s, 0.1)[0] - noise_objective(x - d, flat, s, 0.1)[0]) / 2e-6
         assert g[k] == pytest.approx(num, rel=1e-5, abs=1e-9)
+
+
+def test_indicator_fit_survives_near_alpha_responses() -> None:
+    """Slow, noisy alpha-like means drove the old (tau_r, tau_d - tau_r) fit to tau_d == tau_r and a crash."""
+    from occamworm.baselines.indicator import fit_to_mean_response
+
+    dt = 0.5
+    t = np.arange(60) * dt
+    rng = np.random.default_rng(0)
+    for _ in range(40):
+        tau = rng.uniform(3, 40)
+        fit, amp = fit_to_mean_response((t / tau) * np.exp(1 - t / tau) + rng.normal(0, 0.02, t.size), dt)
+        assert 0 < fit.tau_r < fit.tau_d and np.isfinite(amp)

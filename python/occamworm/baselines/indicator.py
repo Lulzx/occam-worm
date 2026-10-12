@@ -67,26 +67,33 @@ def difference_of_exponentials(t: npt.ArrayLike, tau_r: float, tau_d: float) -> 
     return np.asarray(raw / peak)
 
 
+_LOG_TAU = (-23.0, 9.0)  # tau_r in about [1e-10, 8e3] s
+_LOG_GAP = (-9.0, 16.0)  # (tau_d - tau_r) / tau_r in about [1e-4, 9e6]
+
+
 def fit_to_mean_response(mean: FloatArray, dt: float) -> tuple[Indicator, float]:
     """Least-squares fit of ``A * h(t)`` to a mean impulse-like response sampled from t = 0. Returns (fit, A)."""
     t = np.arange(mean.size) * dt
     ok = np.isfinite(mean)
 
+    def taus(x: FloatArray) -> tuple[float, float]:
+        # tau_d = tau_r (1 + gap) with clipped logs, so every step of the solver is a valid pair: an absolute gap
+        # tau_d - tau_r could round to zero (or tau_r underflow) and stop the fit.
+        tau_r = float(np.exp(np.clip(x[0], *_LOG_TAU)))
+        return tau_r, tau_r * (1.0 + float(np.exp(np.clip(x[1], *_LOG_GAP))))
+
     def resid(x: FloatArray) -> FloatArray:
-        tau_r = float(np.exp(x[0]))
-        tau_d = tau_r + float(np.exp(x[1]))
-        h = difference_of_exponentials(t[ok], tau_r, tau_d)
+        h = difference_of_exponentials(t[ok], *taus(x))
         amp = float(h @ mean[ok]) / max(float(h @ h), 1e-12)
         return np.asarray(mean[ok] - amp * h)
 
     best = None
-    for r0, d0 in ((0.2, 2.0), (0.5, 5.0), (1.0, 10.0), (0.1, 1.0)):
-        res = optimize.least_squares(resid, np.log([r0, d0]), method="lm")
+    for r0, d0 in ((0.2, 2.0), (0.5, 5.0), (1.0, 10.0), (0.1, 1.0)):  # tau_r and tau_d - tau_r in seconds
+        res = optimize.least_squares(resid, np.log([r0, d0 / r0]), method="lm")
         if best is None or res.cost < best.cost:
             best = res
     assert best is not None
-    tau_r = float(np.exp(best.x[0]))
-    tau_d = tau_r + float(np.exp(best.x[1]))
+    tau_r, tau_d = taus(best.x)
     h = difference_of_exponentials(t[ok], tau_r, tau_d)
     return Indicator(tau_r, tau_d), float(h @ mean[ok] / (h @ h))
 
