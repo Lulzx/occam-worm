@@ -183,3 +183,34 @@ def test_published_half_decay_range_brackets_the_central_kernel() -> None:
     lo, hi = _published_half_decay_range({"tau_r_range_s": [0.1, 0.5], "tau_d_range_s": [1.0, 4.0]}, n, dt)
     mid = _timescales(Indicator(0.3, 2.0).kernel(n, dt), dt)["half_decay_s"]
     assert mid is not None and lo < mid < hi
+
+
+def test_student_t_nll_reduces_to_gaussian_and_gradient_is_exact() -> None:
+    from occamworm.analysis.scoring import _flatten, fit_noise, interval_coverage, noise_objective_t
+
+    rng = np.random.default_rng(5)
+    e = rng.standard_normal((30, 20)) * 0.1
+    valid = rng.random((30, 20)) < 0.7
+    s = rng.uniform(0.01, 0.1, 30)
+    sig = np.sqrt(0.5**2 * s**2 + 0.05**2)
+    assert ar1_nll(e, valid, sig, 0.4, nu=1e7) == pytest.approx(ar1_nll(e, valid, sig, 0.4), abs=1e-4)
+    x = np.array([0.3, -1.0, 0.4, 1.2])
+    flat = _flatten(e, valid)
+    f, g = noise_objective_t(x, flat, s, 0.1)
+    m = NoiseModel(float(np.exp(x[0])), float(np.exp(x[1]) * 0.1), float(np.tanh(x[2])), float(np.exp(x[3])))
+    assert f == pytest.approx(ar1_nll(e, valid, m.sigma(s), m.phi, m.nu).sum() / valid.sum(), rel=1e-12)
+    for k in range(4):
+        d = np.zeros(4)
+        d[k] = 1e-6
+        num = (noise_objective_t(x + d, flat, s, 0.1)[0] - noise_objective_t(x - d, flat, s, 0.1)[0]) / 2e-6
+        assert g[k] == pytest.approx(num, rel=1e-5, abs=1e-9)
+    # heavy-tailed data: the t fit finds small nu, a better likelihood and calibrated coverage
+    h = rng.standard_t(3, (400, 30)) * 0.1
+    vh = np.ones_like(h, dtype=bool)
+    sh = np.full(400, 0.05)
+    tm, gm = fit_noise(h, vh, sh, family="student_t_ar1"), fit_noise(h, vh, sh)
+    assert tm.nu is not None and 2.0 < tm.nu < 6.0 and gm.nu is None
+    assert ar1_nll(h, vh, tm.sigma(sh), tm.phi, tm.nu).sum() < ar1_nll(h, vh, gm.sigma(sh), gm.phi).sum()
+    cov = interval_coverage(h, vh, tm.sigma(sh), nu=tm.nu)
+    assert abs(cov["0.50"] - 0.5) < 0.03 and abs(cov["0.95"] - 0.95) < 0.02
+    assert tm.to_json()["family"] == "student_t_ar1"

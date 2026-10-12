@@ -8,7 +8,7 @@ Splits, uncertainty and reporting.
 - `audit.py`, `audit_report.py` — M0 audit: `python -m occamworm.analysis audit [--publish]`
 - `splits.py` — animal-wise outer and inner splits, frozen split files, leakage checks
 - `freeze.py` — `python -m occamworm.analysis splits` freezes the scheme the audit chose
-- `scoring.py` — masked AR(1) and block scoring, noise fit (OW-005)
+- `scoring.py` — masked AR(1) and block scoring, noise fit (OW-005); optional Student-t innovations (`family="student_t_ar1"`, `nu`), Gaussian by default
 - `uncertainty.py` — animal-level bootstrap of paired differences
 - `provenance.py`, `reporting.py` — content-addressed runs, freezing, reports with per-cell provenance (OW-015)
 
