@@ -97,6 +97,8 @@ Tasks:
 **Suggested window:** weeks 15–20.  
 **Objective:** evaluate whether small shared programs predict real held-out responses.
 
+Pre-registration: [PREREGISTRATION_M4.md](../evaluation/PREREGISTRATION_M4.md) (draft) · ticket [OW-017](tickets/OW-017.md).
+
 Tasks:
 
 - [ ] Lock program/parameter budgets and baseline budget matching.

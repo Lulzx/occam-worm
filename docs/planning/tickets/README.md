@@ -22,6 +22,7 @@ Each ticket has an objectively checkable definition of done. Milestone assignmen
 | [OW-014](OW-014.md) | Program posterior and experimental planner | M5 | OW-012 | Experiment design (after engine) |
 | [OW-015](OW-015.md) | Reproducible paper-quality report | M1 onward | OW-012 | Minimum viable engine |
 | [OW-016](OW-016.md) | Optional embodiment connector | M7 | OW-009, OW-013 | Embodiment (after engine) |
+| [OW-017](OW-017.md) | M4 confirmatory atlas search | M4 | OW-006, OW-007, OW-012 | Minimum viable engine |
 
 
 ## 21.1 Dependency graph
@@ -44,6 +45,10 @@ flowchart TD
     G --> L
     M[OW-013 Biology annotations] --> L
     L --> N[OW-014 Model posterior and intervention planner]
+    L --> Q[OW-017 M4 atlas search]
+    F --> Q
+    G --> Q
+    Q --> N
     L --> O[OW-015 Reports]
     N --> O
     I --> P[OW-016 Body connector]
