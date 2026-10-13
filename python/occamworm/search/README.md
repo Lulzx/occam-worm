@@ -12,6 +12,7 @@ Tickets: [OW-012](../../../docs/planning/tickets/OW-012.md) · Spec: [§7.4](../
 | `candidates.py` | The candidate protocol, `KernelCandidate` (B0–B3 families with a declared `L_struct`), and `score_kernels`, which scores frozen pair kernels. |
 | `wrl.py` | `WrlCandidate`: one WRL program on the declared connectome (details below). Also `enumerate_programs` (`ow search enumerate`), `search_volume` and `budget_curve`. |
 | `nested.py` | Ranks candidates by inner-validation NLL (ties go to the shorter `L_total`). Keeps the (`L_total`, NLL) Pareto front, refits the winner, and freezes the selection. Candidates rejected by a gate are logged. |
+| `analysis.py` | Locked M4 analysis: the pre-registered H2 criteria (paired animal bootstrap, drop-one-animal and drop-one-day checks, top-amplitude exclusion, calibration and null-pair margins), a day-clustered interval and the gap fraction. |
 | `controls.py` | M4 negative controls: degree-preserving rewiring of chemical edges (signs stay with the presynaptic neuron) and gap junctions, and a target-label shuffle within recordings. |
 | `locked.py` | Frozen selections (sha256 plus the hash of the training animals). `LockedEvaluator` scores each fold once. |
 | `__main__.py` | `python -m occamworm.search run --config configs/searches/atlas-demo.json` writes `run.json`, `search_volume.json`, `folds.jsonl` and per-fold selections under `artifacts/search-<name>/`. |
