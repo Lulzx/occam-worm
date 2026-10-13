@@ -13,7 +13,9 @@ Tickets: [OW-012](../../../docs/planning/tickets/OW-012.md) · Spec: [§7.4](../
 | `wrl.py` | `WrlCandidate`: one WRL program on the declared connectome (details below). Also `enumerate_programs` (`ow search enumerate`), `search_volume` and `budget_curve`. |
 | `nested.py` | Ranks candidates by inner-validation NLL (ties go to the shorter `L_total`). Keeps the (`L_total`, NLL) Pareto front, refits the winner, and freezes the selection. Candidates rejected by a gate are logged. |
 | `locked.py` | Frozen selections (sha256 plus the hash of the training animals). `LockedEvaluator` scores each fold once. |
-| `__main__.py` | `python -m occamworm.search run --config configs/searches/atlas-demo.json` writes `run.json`, `search_volume.json`, `folds.jsonl` and per-fold selections under `artifacts/search-<name>/`. |
+| `mutate.py` | S1 local structured mutation (§7.2): parses an enumerated program to an expression tree, applies one leaf, operator, insert or remove edit, and keeps a proposal only if it compiles and its canonical hash is in the enumerated set (the declared grammar and budget) and unseen. One register only. |
+| `recovery.py` | M3 gate evidence: plants a known program on a seeded synthetic graph, generates T2a-like data, evaluates the whole pool on a training view, and records truth rank, Pareto membership and parameter error per cell. Replays enumeration, random and S1 hill-climbing on the cached NLLs for any budget. |
+| `__main__.py` | `python -m occamworm.search run --config configs/searches/atlas-demo.json` writes `run.json`, `search_volume.json`, `folds.jsonl` and per-fold selections under `artifacts/search-<name>/`. `recovery --config configs/searches/recovery-reduced.json [--workers N]` runs the sweep of [RECOVERY.md](../../../docs/evaluation/RECOVERY.md) into `artifacts/recovery-<name>/` (resumable, one `cells.jsonl` line per cell). |
 
 `WrlCandidate` details:
 
