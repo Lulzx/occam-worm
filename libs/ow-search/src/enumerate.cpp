@@ -277,8 +277,15 @@ private:
     }
 
     void attempt(int registers, const std::vector<std::string>& updates, const std::function<void(const EnumeratedProgram&)>& visit) {
+        for (const std::string& gap : config_.gap_variants) {
+            attempt_variant(registers, updates, gap, visit);
+        }
+    }
+
+    void attempt_variant(int registers, const std::vector<std::string>& updates, const std::string& gap,
+                         const std::function<void(const EnumeratedProgram&)>& visit) {
         ++summary_.generated;
-        const auto compiled = try_compile(assemble_program_source(config_, registers, updates));
+        const auto compiled = try_compile(assemble_program_source(config_, registers, updates, gap));
         if (!compiled) {
             if (compiled.error().code() == Errc::Stability) {
                 ++summary_.rejected_stability;
@@ -313,7 +320,8 @@ private:
 
 }  // namespace
 
-std::string assemble_program_source(const EnumerationConfig& config, int registers, const std::vector<std::string>& updates) {
+std::string assemble_program_source(const EnumerationConfig& config, int registers, const std::vector<std::string>& updates,
+                                    const std::string& gap) {
     std::string source = "wrl 0.1\ntier " + std::string(tier_name(config.tier)) + "\n";
     if (config.dt_max) {
         source += "dt_max " + canonical_number(*config.dt_max) + "\n";
@@ -327,8 +335,18 @@ std::string assemble_program_source(const EnumerationConfig& config, int registe
         source += "param p" + std::to_string(p) + " : " + t.unit + " in [" + canonical_number(t.lower) + ", " + canonical_number(t.upper) +
                   "] trainable bits " + std::to_string(t.bits) + "\n";
     }
+    if (gap == "scaled") {
+        const ParameterTemplate& t = *config.gap_scale;
+        source += "param pg : " + t.unit + " in [" + canonical_number(t.lower) + ", " + canonical_number(t.upper) + "] trainable bits " +
+                  std::to_string(t.bits) + "\n";
+    }
     for (int r = 0; r < registers; ++r) {
         source += "next " + register_name(r) + " = " + updates[static_cast<std::size_t>(r)] + "\n";
+    }
+    if (gap == "unit") {
+        source += "gap r0\n";
+    } else if (gap == "scaled") {
+        source += "gap r0 scale pg\n";
     }
     source += "observe identity_v1(r0)\n";
     return source;
@@ -428,6 +446,40 @@ EnumerationConfig enumeration_config_from_json(const Json& json) {
         }
         if (const Json* dt = json.find("dt_max")) {
             config.dt_max = dt->as_double();
+        }
+        if (const Json* list = json.find("gap_variants")) {
+            config.gap_variants.clear();
+            for (const Json& item : list->as_array()) {
+                const std::string v = item.as_string();
+                if (v != "none" && v != "unit" && v != "scaled") {
+                    config_error("gap_variants entries must be none, unit or scaled");
+                }
+                if (std::find(config.gap_variants.begin(), config.gap_variants.end(), v) != config.gap_variants.end()) {
+                    config_error("gap_variants lists " + v + " twice");
+                }
+                config.gap_variants.push_back(v);
+            }
+            if (config.gap_variants.empty()) {
+                config_error("gap_variants must not be empty");
+            }
+        }
+        if (const Json* g = json.find("gap_scale")) {
+            ParameterTemplate t;
+            t.unit = g->at("unit").as_string();
+            t.lower = g->at("lower").as_double();
+            t.upper = g->at("upper").as_double();
+            t.bits = static_cast<int>(g->at("bits").as_int());
+            if (t.unit != "1" || t.lower < 0.0 || t.upper <= t.lower) {
+                config_error("gap_scale must be dimensionless with 0 <= lower < upper");
+            }
+            config.gap_scale = t;
+        }
+        const bool any_gap = std::any_of(config.gap_variants.begin(), config.gap_variants.end(), [](const std::string& v) { return v != "none"; });
+        if (any_gap && config.tier != Tier::G1) {
+            config_error("gap variants need tier G1");
+        }
+        if (std::find(config.gap_variants.begin(), config.gap_variants.end(), "scaled") != config.gap_variants.end() && !config.gap_scale) {
+            config_error("gap variant scaled needs gap_scale");
         }
     } catch (const Error& error) {
         if (error.code() == Errc::Json) {

@@ -42,6 +42,10 @@ struct EnumerationConfig {
     std::vector<ParameterTemplate> parameters;  // trainable parameter pool (needs "param")
     std::optional<double> dt_max;
     std::vector<double> register_init;  // per register; missing entries are 0
+    // Electrical coupling of r0 (G1): every tree tuple is tried once per variant, in this order. "none" (no gap),
+    // "unit" (`gap r0`), "scaled" (`gap r0 scale pg`, pg from `gap_scale`, dimensionless, lower >= 0).
+    std::vector<std::string> gap_variants = {"none"};
+    std::optional<ParameterTemplate> gap_scale;
 };
 
 struct EnumerationSummary {
@@ -64,9 +68,10 @@ EnumerationConfig enumeration_config_from_json(const Json& json);  // throws Err
 // returns the accounting of every attempted candidate.
 EnumerationSummary enumerate_programs(const EnumerationConfig& config, const std::function<void(const EnumeratedProgram&)>& visit);
 
-// WRL source of one candidate: `registers` registers r0.. updated by the given expressions, observing r0.
-// Shared by the enumerator and by the independent brute-force check in the tests.
-std::string assemble_program_source(const EnumerationConfig& config, int registers, const std::vector<std::string>& updates);
+// WRL source of one candidate: `registers` registers r0.. updated by the given expressions, observing r0, with
+// the given gap variant. Shared by the enumerator and by the independent brute-force check in the tests.
+std::string assemble_program_source(const EnumerationConfig& config, int registers, const std::vector<std::string>& updates,
+                                    const std::string& gap = "none");
 
 Json program_record_json(const EnumeratedProgram& program);
 Json summary_record_json(const EnumerationConfig& config, const EnumerationSummary& summary);

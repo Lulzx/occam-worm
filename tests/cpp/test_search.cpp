@@ -220,11 +220,13 @@ std::set<std::string> brute_force_hashes(const EnumerationConfig& config, long l
         std::vector<std::size_t> choice(static_cast<std::size_t>(registers), 0);
         const auto visit_all = [&](auto&& self, int position, int nodes_used, std::vector<std::string>& updates) -> void {
             if (position == registers) {
-                ++raw_count;
-                const auto compiled = try_compile(assemble_program_source(config, registers, updates));
-                if (compiled && static_cast<int>(compiled->registers.size()) <= config.max_registers &&
-                    static_cast<int>(compiled->params.size()) <= config.max_parameters) {
-                    hashes.insert(compiled->program_hash);
+                for (const std::string& gap : config.gap_variants) {
+                    ++raw_count;
+                    const auto compiled = try_compile(assemble_program_source(config, registers, updates, gap));
+                    if (compiled && static_cast<int>(compiled->registers.size()) <= config.max_registers &&
+                        static_cast<int>(compiled->params.size()) <= config.max_parameters) {
+                        hashes.insert(compiled->program_hash);
+                    }
                 }
                 return;
             }
@@ -334,4 +336,39 @@ OW_TEST(enumeration_config_validation) {
     OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(R"({"name":"x","tier":"G1","max_nodes":3,"max_depth":2,"max_registers":1,"max_parameters":0,"ops":["lut"]})")), Errc::Input);
     OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(R"({"name":"x","tier":"G1","max_nodes":99,"max_depth":2,"max_registers":1,"max_parameters":0,"ops":[]})")), Errc::Input);
     OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(R"({"name":"x","tier":"G1"})")), Errc::Input);
+}
+
+OW_TEST(enumeration_gap_variants_visit_every_canonical_program_once) {
+    EnumerationConfig config = load_config("configs/searches/g1-tiny.json");
+    config.name = "g1-tiny-gap";
+    config.max_nodes = 4;
+    config.max_parameters = 3;
+    config.sum_in_selects = {"exc", "inh", "all"};
+    config.gap_variants = {"none", "unit", "scaled"};
+    config.gap_scale = ParameterTemplate{"1", 0.0, 10.0, 10};
+    check_exactly_once(config);
+    const EnumerationRun run = run_enumeration(config);
+    std::size_t unit = 0, scaled = 0;
+    for (const std::string& source : run.sources) {
+        unit += source.find("gap s0\n") != std::string::npos ? 1 : 0;
+        scaled += source.find("gap s0 scale") != std::string::npos ? 1 : 0;
+    }
+    OW_CHECK(unit > 0 && scaled > 0);
+    EnumerationConfig plain = config;
+    plain.gap_variants = {"none"};
+    const EnumerationRun base = run_enumeration(plain);
+    OW_CHECK_EQ(run.hashes.size(), base.hashes.size() + unit + scaled);  // a gap program never collides with a gap-free one
+    OW_CHECK(run.summary.generated == 3 * base.summary.generated);
+}
+
+OW_TEST(enumeration_gap_config_validation) {
+    const std::string head = R"({"name":"x","tier":"G1","max_nodes":3,"max_depth":2,"max_registers":1,"max_parameters":1,"ops":["stimulus"],)";
+    OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(head + R"("gap_variants":["sideways"]})")), Errc::Input);
+    OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(head + R"("gap_variants":["none","none"]})")), Errc::Input);
+    OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(head + R"("gap_variants":["scaled"]})")), Errc::Input);
+    OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(head + R"("gap_variants":["scaled"],"gap_scale":{"unit":"s","lower":0,"upper":1,"bits":4}})")), Errc::Input);
+    OW_CHECK_THROWS(enumeration_config_from_json(Json::parse(R"({"name":"x","tier":"G0","max_nodes":3,"max_depth":2,"max_registers":1,"max_parameters":0,"ops":["stimulus"],"gap_variants":["unit"]})")), Errc::Input);
+    const EnumerationConfig ok = enumeration_config_from_json(Json::parse(head + R"("gap_variants":["none","scaled"],"gap_scale":{"unit":"1","lower":0,"upper":10,"bits":10}})"));
+    OW_CHECK_EQ(ok.gap_variants.size(), std::size_t{2});
+    OW_CHECK(ok.gap_scale.has_value());
 }
