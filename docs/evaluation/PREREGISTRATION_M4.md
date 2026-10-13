@@ -41,7 +41,7 @@ Sensitivity row: every primary result is also reported without folds 0–2 (§10
   - `sum_in` selectors: `exc`, `inh`, `all`.
   - Two `gap` variants per program: none, or `gap r0 scale p` with a trainable dimensionless scale in [0, 10] (10 bits).
   - `gap` and `all` are added because `gap-leak`, which reads `sum_in(v, all)` and couples over gap junctions, closed 26–49% of the B0→B3 inner gap in the demos. Nothing enumerated without them closed more than 4%. This addition was informed by inner scores of demo folds 0–2.
-- **Budget:** `max_nodes` 6, `max_depth` 4, `max_registers` 1, `max_parameters` 3. Parameters: the `g1-tiny` pool (gain in [0, 2]; time constants in [0.1, 5] s and [0.01, 5] s; 8 bits each) plus the gap scale. Config: [`configs/searches/g1-m4.json`](../../configs/searches/g1-m4.json).
+- **Budget:** `max_nodes` 5 (6 failed the volume rule below), `max_depth` 4, `max_registers` 1, `max_parameters` 3. Parameters: the `g1-tiny` pool (gain in [0, 2]; time constants in [0.1, 5] s and [0.01, 5] s; 8 bits each) plus the gap scale. Config: [`configs/searches/g1-m4.json`](../../configs/searches/g1-m4.json).
 - **Pre-declared hand-written rules:** `gap-leak` and `leak-adapt` on the rule track; `gap-leak-np` variants for H2-np only (§9).
 - **Volume rule.** Every gated program is scored by the pilot; nothing is truncated by enumeration order. If the measured cost (§5) projects past 400 worker-hours, `max_nodes` drops to 5 before launch. That decision uses only the enumeration count and fold-0 timing.
 
@@ -69,10 +69,24 @@ Compute (fold 0, one core):
 | Pilot | 3.5 s per program |
 | Full evaluation | 11.5 s per program; 21 s for `gap-leak` |
 
-- **Volume.** Without gap variants, `g1-m4` has 32,140 unique programs at 6 nodes and 5,402 at 5. The gap variants are assumed to double this, which gives about 11,600 gated programs at 6 nodes.
-- **Projected cost at today's pilot cost.** About 1,260 worker-hours at 6 nodes and 220 at 5.
+- **Volume (measured with the enumerator's gap option).**
+
+  | | 6 nodes | 5 nodes |
+  | --- | --- | --- |
+  | Unique programs | 64,280 | 10,804 |
+  | Gated programs | ≈ 16,750 | ≈ 2,270 |
+
+  Half the programs carry the gap. Gap programs pass the gates more often: 34% against 18% at 6 nodes, and 26% against 16% at 5, from every 21st program.
+- **Projected cost.**
+
+  | | 6 nodes | 5 nodes |
+  | --- | --- | --- |
+  | At today's pilot cost | ≈ 1,800 worker-hours | ≈ 260 worker-hours (about 24 h on 11 workers) |
+  | Best case once overhead is removed (about 1.15 s per program) | ≈ 600 worker-hours | |
+
+  Six nodes fails the 400 worker-hour rule either way, so the budget is 5 nodes (applied 2026-10-13). At 5 nodes, `gap-leak`'s own structure (6 nodes) is not enumerated, but `gap-leak` stays on the rule track as a pre-declared rule.
 - **Overhead.** Most of the pilot's cost is per-program overhead: the T2a pair statistics, which are the same for every candidate, are recomputed each time, and each program is traced again. OW-017 removes that overhead before the measured projection.
-- **Applying the rule.** The volume rule of §4 is applied to the measured projection.
+- **Measured again before launch.** The projection is re-measured after OW-017's overhead work and recorded there.
 
 ## 6. Comparator: the strongest eligible baseline
 

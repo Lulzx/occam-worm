@@ -1,7 +1,7 @@
 {
   "name": "g1-m4",
   "tier": "G1",
-  "max_nodes": 6,
+  "max_nodes": 5,
   "max_depth": 4,
   "max_registers": 1,
   "max_parameters": 3,
