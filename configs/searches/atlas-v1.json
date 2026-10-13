@@ -1,0 +1,35 @@
+{
+  "name": "atlas-v1",
+  "description": "M4 confirmatory nested rule search (docs/evaluation/PREREGISTRATION_M4.md). Draft until the pre-registration is frozen.",
+  "task": "T2a",
+  "history": false,
+  "folds": "all",
+  "observation": "student_t_ar1",
+  "baseline_track": ["B0", "B1", "B1d", "B2-K1", "B2-K2", "B2-K4", "B2-K8", "B3", "B4-fixed", "B4-learned"],
+  "rules": ["configs/rules/gap-leak.wrl", "configs/rules/leak-adapt.wrl"],
+  "enumerate": { "config": "configs/searches/g1-m4.json", "limit": null },
+  "pilot": { "inner_splits": [0], "starts": 1, "top_k": 32 },
+  "full": { "starts": 2 },
+  "seed": 0,
+  "budget_orders": 50,
+  "secondary_task": { "task": "T2b", "indicator": "experiment" },
+  "controls": {
+    "degree_preserving_graphs": { "seeds": [0, 1, 2, 3, 4], "full_research_folds": [0, 11, 22, 33, 44, 55, 66, 77, 88, 99] },
+    "target_label_shuffle": { "within": "recording", "seeds": [0, 1, 2, 3, 4] },
+    "np": {
+      "rules": [
+        { "path": "configs/rules/gap-leak-np.wrl", "name": "gap-leak-np@short", "modulatory": "ripoll-sanchez2023-short" }
+      ],
+      "shuffle_seeds": [0, 1, 2, 3, 4]
+    }
+  },
+  "analysis": {
+    "bootstrap": { "unit": "animal", "replicates": 2000, "seed": 20261008, "level": 0.95 },
+    "cluster_sensitivity": "recording_day",
+    "calibration_margin": 0.05,
+    "null_pair_t_max": 1.0,
+    "null_nll_margin_nats_per_sample": 0.02,
+    "top_amplitude_fraction_excluded": 0.1,
+    "exposed_folds": [0, 1, 2]
+  }
+}

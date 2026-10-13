@@ -9,6 +9,7 @@ Baselines B0–B4, each in history and no-history variants, scored on T2a and T2
 - `linear_network.py` — B4 linear network on the Cook 2019 topology, fixed and learned variants, stable by construction
 - `indicator.py` — indicator stage and resolvable bandwidth (§4.5)
 - `evaluate.py` — inner ridge selection, outer refit, single scoring of held-out animals
+- `noise_evidence.py` — Gaussian vs Student-t AR(1) noise on inner folds only (decision 3): `python -m occamworm.baselines.noise_evidence`
 - `benchmark.py`, `summary.py`, `control.py` — `python -m occamworm.baselines {benchmark,summarize,control}` on the frozen split
 - `synthetic.py` — synthetic data with known kernels (done-when tests, false-sharing control)
 
